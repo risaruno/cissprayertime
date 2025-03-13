@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, MapPin } from 'lucide-react';
+import YouTube from 'react-youtube';
 
 interface PrayerTimes {
   Fajr: string;
@@ -16,6 +17,15 @@ interface CalendarData {
 }
 
 function App() {
+  const opts = {
+    height: '100%',
+    width: '100%',
+    playerVars: {
+      autoplay: 1 as 0 | 1,
+      controls: 0 as 0 | 1,
+      mute: 1 as 0 | 1,
+    },
+  };
   const [location, setLocation] = useState('');
   const [prayerTimes, setPrayerTimes] = useState<PrayerTimes | null>(null);
   const [calendar, setCalendar] = useState<CalendarData | null>(null);
@@ -26,6 +36,11 @@ function App() {
   const [countdown, setCountdown] = useState('');
   const [iqamahCountdown, setIqamahCountdown] = useState('');
   const [showIqamah, setShowIqamah] = useState(false);
+  // format current time into 24 hours format on current locale time
+  const currentTime = {
+    f: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' })
+  };
+  
 
   const fetchPrayerTimes = async (city: string) => {
     setLoading(true);
@@ -38,12 +53,21 @@ function App() {
       const data = await response.json();
       
       if (data.code === 200) {
-        setPrayerTimes(data.data.timings);
+        const filteredTimings: PrayerTimes = {
+          Fajr: data.data.timings.Fajr,
+          Sunrise: data.data.timings.Sunrise,
+          Dhuhr: data.data.timings.Dhuhr,
+          Asr: data.data.timings.Asr,
+          Maghrib: data.data.timings.Maghrib,
+          Isha: data.data.timings.Isha,
+        };
+        
+        setPrayerTimes(filteredTimings);
         setCalendar({
           gregorian: data.data.date.gregorian.date,
           hijri: `${data.data.date.hijri.day} ${data.data.date.hijri.month.en} ${data.data.date.hijri.year}`
         });
-        updateNextPrayer(data.data.timings);
+        updateNextPrayer(filteredTimings);
       } else {
         setError('Location not found. Please try another city.');
       }
@@ -55,7 +79,7 @@ function App() {
 
   const updateNextPrayer = (times: PrayerTimes) => {
     const now = new Date();
-    const prayers = Object.entries(times).slice(0, 7);
+    const prayers = Object.entries(times);
     const todayPrayers = prayers.map(([name, time]) => {
       const [hours, minutes] = time.split(':');
       const prayerTime = new Date();
@@ -155,14 +179,14 @@ function App() {
             </div>
             
             {/* Headings */}
-            <div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 font-arabic tracking-wide text-white">
+            <div className='text-white text-shadow shadow-blue-950'>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 font-arabic tracking-wide">
                 Masjid Al-Falah, Seoul
               </h1>
-              <h2 className="text-4xl md:text-2xl text-blue-200 font-semibold">
+              <h2 className="text-4xl md:text-2xl font-semibold">
                 Center of Islamic Studies Seoul
               </h2>
-              <h2 className="text-4xl md:text-2xl text-blue-200 font-semibold">
+              <h2 className="text-4xl md:text-2xl font-semibold">
                 {/* <MapPin className="w-5 h-5 mr-2" /> */}
                 서울특별시 영등포구 신길로 60다길21
               </h2>
@@ -178,9 +202,12 @@ function App() {
             </div>
           </div>
           
-          <div className="flex flex-col items-center space-y-2 text-gray-200">
-            <p className="text-5xl">
-              1005-904-584-084 Woori Bank (서울이슬람교육센터)
+          <div className="flex flex-col items-center space-y-2 text-white text-shadow shadow-blue-950">
+            <p className="text-4xl">
+              Woori Bank 1005-904-584-084
+            </p>
+            <p className="text-4xl">
+              (서울이슬람교육센터)
             </p>
           </div>
         </div>
@@ -191,9 +218,9 @@ function App() {
           <div>
             {calendar && (
               <div className="h-full">
-                <div className="h-full p-6 rounded-lg bg-black/30 backdrop-blur-md text-center flex flex-col justify-center">
-                  <h2 className="text-2xl font-semibold mb-4 text-white">Today's Date</h2>
-                  <div className="space-y-3">
+                <div className="p-6 rounded-lg bg-black/20 backdrop-blur-md text-center flex flex-row justify-center gap-3">
+                  <h2 className="text-6xl font-semibold text-white">{currentTime.f}</h2>
+                  <div className="flex flex-col items-start gap-2">
                     <p className="text-xl text-gray-200">{calendar.gregorian}</p>
                     <p className="text-xl font-arabic text-gray-200">{calendar.hijri}</p>
                   </div>
@@ -205,17 +232,16 @@ function App() {
           {/* Right Column - Next Prayer */}
           <div>
             {nextPrayer && (countdown || showIqamah) && (
-              <div className="h-full p-6 rounded-lg bg-black/30 backdrop-blur-md text-center flex flex-col justify-center">
-                <h3 className="text-2xl font-semibold mb-4 text-white">Next Prayer: {nextPrayer.name}</h3>
+              <div className="h-full p-6 rounded-lg bg-black/20 backdrop-blur-md text-center flex flex-row align-middle justify-center gap-2">
+                <div className="text-2xl font-semibold mb-4 text-white"><span className='text-blue-50'>Until</span> {nextPrayer.name}: </div>
                 {countdown && (
                   <>
                     <div className="text-4xl font-bold font-mono mb-3 text-white">{countdown}</div>
-                    <p className="text-blue-200 text-lg">Until Adhan</p>
                   </>
                 )}
                 
                 {showIqamah && iqamahCountdown && (
-                  <div className="mt-4 pt-4 border-t border-white/20">
+                  <div className="mt-4 pt-4 border-t border-white/40">
                     <div className="text-3xl font-bold font-mono mb-2 text-white">{iqamahCountdown}</div>
                     <p className="text-blue-200 text-lg">Until Iqamah</p>
                   </div>
@@ -227,17 +253,17 @@ function App() {
 
         {/* Prayer Times Display */}
         {prayerTimes && (
-          <div className="max-w-8xl mx-auto grid grid-cols-2 md:grid-cols-7 gap-4">
-            {Object.entries(prayerTimes).slice(0, 7).map(([prayer, time]) => (
+          <div className="max-w-8xl mx-auto grid grid-cols-2 md:grid-cols-6 gap-4">
+            {Object.entries(prayerTimes).map(([prayer, time]) => (
               <div
                 key={prayer}
-                className={`p-6 rounded-lg backdrop-blur-md transition-colors ${
+                className={`px-6 py-3 rounded-lg backdrop-blur-md transition-colors ${
                   nextPrayer?.name === prayer 
-                    ? 'bg-black/50 ring-2 ring-blue-400/50' 
-                    : 'bg-black/30 hover:bg-black/40'
+                    ? 'bg-black/30 ring-2 ring-blue-400/50' 
+                    : 'bg-black/20 hover:bg-black/30'
                 }`}
               >
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-center mb-2">
                   <h3 className="text-lg font-semibold text-white">{prayer}</h3>
                 </div>
                 <p className="text-2xl text-center mt-2 text-gray-200">{time}</p>
@@ -247,12 +273,13 @@ function App() {
         )}
 
         {/* Quran Verse */}
-        <div className="fixed bottom-0 left-0 w-full bg-black/50 backdrop-blur-md py-6">
+        <div className="fixed bottom-0 left-0 w-full bg-black/20 backdrop-blur-md py-6">
           <p className="text-center text-2xl font-arabic animate-scroll text-white">
             {quranVerse}
           </p>
         </div>
       </div>
+      <YouTube videoId="-JhoMGoAfFc" opts={opts} style={{ top: 0, position: 'absolute', left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}/>
     </div>
   );
 }
