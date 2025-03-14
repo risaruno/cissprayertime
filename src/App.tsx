@@ -64,7 +64,7 @@ function App() {
         
         setPrayerTimes(filteredTimings);
         setCalendar({
-          gregorian: data.data.date.gregorian.date,
+          gregorian: `${data.data.date.gregorian.day} ${data.data.date.gregorian.month.en} ${data.data.date.gregorian.year}`,
           hijri: `${data.data.date.hijri.day} ${data.data.date.hijri.month.en} ${data.data.date.hijri.year}`
         });
         updateNextPrayer(filteredTimings);
@@ -220,9 +220,9 @@ function App() {
               <div className="h-full">
                 <div className="p-6 rounded-lg bg-black/20 backdrop-blur-md text-center flex flex-row justify-center gap-3">
                   <h2 className="text-6xl font-semibold text-white">{currentTime.f}</h2>
-                  <div className="flex flex-col items-start gap-2">
-                    <p className="text-xl text-gray-200">{calendar.gregorian}</p>
-                    <p className="text-xl font-arabic text-gray-200">{calendar.hijri}</p>
+                  <div className="flex flex-col items-start gap-1">
+                    <p className="text-xl text-gray-100">{calendar.gregorian}</p>
+                    <p className="text-xl font-arabic text-gray-100">{calendar.hijri}</p>
                   </div>
                 </div>
               </div>
@@ -232,14 +232,14 @@ function App() {
           {/* Right Column - Next Prayer */}
           <div>
             {nextPrayer && (countdown || showIqamah) && (
-              <div className="h-full p-6 rounded-lg bg-black/20 backdrop-blur-md text-center flex flex-row align-middle justify-center gap-2">
-                <div className="text-2xl font-semibold mb-4 text-white"><span className='text-blue-50'>Until</span> {nextPrayer.name}: </div>
+              <div className="h-full p-6 rounded-lg bg-black/20 backdrop-blur-md text-center flex flex-row align-middle justify-center gap-4">
                 {countdown && (
                   <>
-                    <div className="text-4xl font-bold font-mono mb-3 text-white">{countdown}</div>
+                    <div className="text-6xl font-mono text-white/70">{countdown}</div>
                   </>
                 )}
-                
+                <div className="text-4xl mb-4 text-white/70"><span>Until</span> {nextPrayer.name}</div>
+
                 {showIqamah && iqamahCountdown && (
                   <div className="mt-4 pt-4 border-t border-white/40">
                     <div className="text-3xl font-bold font-mono mb-2 text-white">{iqamahCountdown}</div>
@@ -264,9 +264,9 @@ function App() {
                 }`}
               >
                 <div className="flex items-center justify-center mb-2">
-                  <h3 className="text-lg font-semibold text-white">{prayer}</h3>
+                  <h3 className="text-3xl font-semibold text-white">{prayer}</h3>
                 </div>
-                <p className="text-2xl text-center mt-2 text-gray-200">{time}</p>
+                <p className="text-3xl text-center mt-2 text-gray-200">{time}</p>
               </div>
             ))}
           </div>
