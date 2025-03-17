@@ -165,7 +165,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[url('https://i.ibb.co/1C78qrt/Syurk.png')] bg-cover bg-center bg-no-repeat before:content-[''] before:absolute before:inset-0 before:bg-gradient-to-b before:from-black/60 before:via-black/40 before:to-black/60 relative">
-      <div className="container mx-auto px-4 py-8 relative z-10">
+      <div className="container mx-auto px-10 py-20 relative z-10">
         {/* Mosque Headings with Logos */}
         <div className="text-center mb-12">
           <div className="flex justify-between items-center mb-6">
