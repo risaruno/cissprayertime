@@ -5,10 +5,262 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Masjid Al-Falah Seoul</title>
-    <script type="module" crossorigin src="./assets/index-WYYbOrby.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-B1bgY4Er.css">
+    <style>/* LIQUID GLASS STYLES */
+
+      .liquidGlass-wrapper {
+        position: relative;
+        display: flex;
+        font-weight: 600;
+        overflow: hidden;
+      
+        color: black;
+      
+        /* Apple-style subtle shadow */
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1),
+                    0 1px 2px rgba(0, 0, 0, 0.06);
+      
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                    box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      
+      .liquidGlass-wrapper:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15),
+                    0 2px 4px rgba(0, 0, 0, 0.08);
+      }
+      
+      /* Active Prayer Time Style */
+      .liquidGlass-wrapper.active {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.75), rgba(22, 163, 74, 0.7));
+        border: 2px solid rgba(34, 197, 94, 0.3);
+        box-shadow: 0 4px 16px rgba(34, 197, 94, 0.5),
+                    0 2px 6px rgba(34, 197, 94, 0.3),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        animation: pulse-glow 2s ease-in-out infinite;
+      }
+      
+      .liquidGlass-wrapper.active:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(34, 197, 94, 0.7),
+                    0 3px 8px rgba(34, 197, 94, 0.35),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      }
+      
+      @keyframes pulse-glow {
+        0%, 100% {
+          box-shadow: 0 4px 16px rgba(34, 197, 94, 0.5),
+                      0 2px 6px rgba(34, 197, 94, 0.3),
+                      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        50% {
+          box-shadow: 0 4px 20px rgba(34, 197, 94, 0.4),
+                      0 2px 8px rgba(34, 197, 94, 0.5),
+                      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+      }
+      
+      .liquidGlass-effect {
+        position: absolute;
+        z-index: 0;
+        inset: 0;
+      
+        /* Apple-style glass blur - more subtle */
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        filter: url(#glass-distortion);
+        overflow: hidden;
+        isolation: isolate;
+      }
+      
+      /* Enhanced blur for active prayer */
+      .liquidGlass-wrapper.active .liquidGlass-effect {
+        backdrop-filter: blur(24px) saturate(200%);
+        -webkit-backdrop-filter: blur(24px) saturate(200%);
+      }
+      
+      .liquidGlass-tint {
+        z-index: 1;
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+      }
+      
+      /* Enhanced tint for active prayer */
+      .liquidGlass-wrapper.active .liquidGlass-tint {
+        background: rgba(0, 0, 0, 0.3);
+      }
+      
+      .liquidGlass-shine {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+      
+        overflow: hidden;
+      
+        /* Apple-style subtle inner shine */
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4),
+                    inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+      }
+      
+      /* Enhanced shine for active prayer */
+      .liquidGlass-wrapper.active .liquidGlass-shine {
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6),
+                    inset 0 -1px 0 rgba(34, 197, 94, 0.2);
+      }
+      
+      .liquidGlass-text {
+        z-index: 3;
+        font-size: 2rem;
+        color: black;
+      }
+      
+      /* OTHER STYLES */
+      
+      a {
+        text-decoration: none;
+      }
+      
+      .wrapper {
+        display: flex;
+        gap: 25px;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-end;
+      }
+      
+      .menu,
+      .menu > div {
+        padding: 0.4rem;
+        border-radius: 1.8rem;
+      }
+      
+      .menu > div > div {
+        font-size: 20px;
+        color: white;
+        padding: 0.4rem 0.6rem;
+        border-radius: 0.8rem;
+        transition: all 0.1s ease-in;
+      }
+      
+      .menu > div > div:hover {
+        background-color: rgba(255, 255, 255, 0.5);
+        box-shadow: inset -2px -2px 2px rgba(0, 0, 0, 0.1);
+        -webkit-backdrop-filter: blur(2px);
+                backdrop-filter: blur(2px);
+      }
+      
+      .dock {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border-radius: 2rem;
+        padding: 0.6rem;
+      }
+      
+      .dock,
+      .dock > div {
+        border-radius: 2rem;
+      }
+      
+      .dock img {
+        width: 75px;
+        padding: 0;
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+      }
+      
+      .dock img:hover {
+        transform: scale(1.05);
+        transform-origin: center center;
+      }
+      
+      .button {
+        padding: 1.5rem 2.5rem;
+        border-radius: 3rem;
+      }
+      
+      .button,
+      .button > div {
+        border-radius: 3rem;
+      }
+      
+      .button svg {
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+      }
+      
+      .button:hover svg {
+        transform: scale(1.05);
+      }
+      
+      @keyframes moveBackground {
+        from {
+          background-position: 0% 0%;
+        }
+        to {
+          background-position: 0% -1500%;
+        }
+      }</style>
+    <script type="module" crossorigin src="./assets/index-BPxsH_oW.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-DeKOSCSm.css">
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"></div>
+
+    <svg style="display: none">
+      <filter
+        id="glass-distortion"
+        x="0%"
+        y="0%"
+        width="100%"
+        height="100%"
+        filterUnits="objectBoundingBox"
+      >
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.01 0.01"
+          numOctaves="1"
+          seed="5"
+          result="turbulence"
+        />
+        <!-- Seeds: 14, 17,  -->
+
+        <feComponentTransfer in="turbulence" result="mapped">
+          <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5" />
+          <feFuncG type="gamma" amplitude="0" exponent="1" offset="0" />
+          <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5" />
+        </feComponentTransfer>
+
+        <feGaussianBlur in="turbulence" stdDeviation="3" result="softMap" />
+
+        <feSpecularLighting
+          in="softMap"
+          surfaceScale="5"
+          specularConstant="1"
+          specularExponent="100"
+          lighting-color="white"
+          result="specLight"
+        >
+          <fePointLight x="-200" y="-200" z="300" />
+        </feSpecularLighting>
+
+        <feComposite
+          in="specLight"
+          operator="arithmetic"
+          k1="0"
+          k2="1"
+          k3="1"
+          k4="0"
+          result="litImage"
+        />
+
+        <feDisplacementMap
+          in="SourceGraphic"
+          in2="softMap"
+          scale="150"
+          xChannelSelector="R"
+          yChannelSelector="G"
+        />
+      </filter>
+    </svg>
   </body>
 </html>
