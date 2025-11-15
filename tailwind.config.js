@@ -14,6 +14,15 @@ export default {
         DEFAULT: '6px 4px 6px var(--tw-shadow-color)',
         lg: '12px 8px 8px var(--tw-shadow-color)',
       },
+      animation: {
+        'scroll-infinite': 'scroll-infinite 30s linear infinite',
+      },
+      keyframes: {
+        'scroll-infinite': {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
+      },
     },
   },
   plugins: [
