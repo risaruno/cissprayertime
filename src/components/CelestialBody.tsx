@@ -49,12 +49,16 @@ function CelestialBody({ isDaytime, moonPhase = 0.5, showClouds }: CelestialBody
 
   const moonStyle = getMoonPhaseStyle(moonPhase);
 
+  // Determine how many clouds to show and their opacity
+  const cloudsToShow = showClouds ? cloudPositions : cloudPositions.slice(0, 1); // Show 1 cloud when not cloudy, all 3 when cloudy
+  const cloudOpacityMultiplier = showClouds ? 1 : 0.4; // Lighter clouds when not cloudy
+
   return (
-    <div className="relative w-full h-full flex items-center justify-center">
+    <div className="relative h-[400px] flex items-center justify-center">
       {/* Sun (Daytime) */}
       {isDaytime && (
         <div 
-          className="relative"
+          className="relative z-20"
           style={{
             animation: 'float-sun 8s ease-in-out infinite, sun-glow 4s ease-in-out infinite'
           }}
@@ -70,7 +74,7 @@ function CelestialBody({ isDaytime, moonPhase = 0.5, showClouds }: CelestialBody
       {/* Moon (Nighttime) */}
       {!isDaytime && (
         <div 
-          className="relative"
+          className="relative z-20"
           style={{
             animation: 'float-moon 10s ease-in-out infinite, moon-glow 5s ease-in-out infinite'
           }}
@@ -95,54 +99,52 @@ function CelestialBody({ isDaytime, moonPhase = 0.5, showClouds }: CelestialBody
         </div>
       )}
 
-      {/* Clouds - only shown when weather is cloudy */}
-      {showClouds && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {cloudPositions.map((cloud, index) => (
-            <div
-              key={index}
-              className="absolute"
-              style={{
-                top: `${cloud.top}%`,
-                animation: `cloud-drift-${(index % 3) + 1} ${cloud.duration}s linear infinite`,
-                animationDelay: `${cloud.delay}s`,
-                transform: `scale(${cloud.size})`,
-                opacity: cloud.opacity,
-              }}
-            >
-              <svg width="200" height="80" viewBox="0 0 200 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <g filter="url(#cloud-shadow)">
-                  {/* Cloud shape */}
-                  <ellipse cx="50" cy="50" rx="35" ry="25" fill="white" opacity="0.9" />
-                  <ellipse cx="80" cy="45" rx="40" ry="28" fill="white" opacity="0.95" />
-                  <ellipse cx="110" cy="50" rx="38" ry="26" fill="white" opacity="0.9" />
-                  <ellipse cx="140" cy="48" rx="35" ry="25" fill="white" opacity="0.85" />
-                  
-                  {/* Bottom fill */}
-                  <rect x="30" y="45" width="125" height="20" fill="white" opacity="0.9" />
-                  
-                  {/* Subtle shading */}
-                  <ellipse cx="80" cy="60" rx="50" ry="15" fill="#e2e8f0" opacity="0.4" />
-                  <ellipse cx="110" cy="62" rx="45" ry="12" fill="#cbd5e1" opacity="0.3" />
-                </g>
-                <defs>
-                  <filter id="cloud-shadow" x="0" y="0" width="200" height="100" filterUnits="userSpaceOnUse">
-                    <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-                    <feOffset dy="2" result="offsetblur"/>
-                    <feComponentTransfer>
-                      <feFuncA type="linear" slope="0.3"/>
-                    </feComponentTransfer>
-                    <feMerge>
-                      <feMergeNode/>
-                      <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                  </filter>
-                </defs>
-              </svg>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Clouds - Always show some clouds, more when weather is cloudy */}
+      <div className="absolute inset-0 pointer-events-none z-10">
+        {cloudsToShow.map((cloud, index) => (
+          <div
+            key={index}
+            className="absolute"
+            style={{
+              top: `${cloud.top}%`,
+              animation: `cloud-drift-${(index % 3) + 1} ${cloud.duration}s linear infinite`,
+              animationDelay: `${cloud.delay}s`,
+              transform: `scale(${cloud.size * 2})`, // Make clouds bigger (1.5x)
+              opacity: cloud.opacity * cloudOpacityMultiplier,
+            }}
+          >
+            <svg width="280" height="112" viewBox="0 0 280 112" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g filter="url(#cloud-shadow-${index})">
+                {/* Cloud shape - bigger version */}
+                <ellipse cx="70" cy="70" rx="49" ry="35" fill="white" opacity="0.9" />
+                <ellipse cx="112" cy="63" rx="56" ry="39" fill="white" opacity="0.95" />
+                <ellipse cx="154" cy="70" rx="53" ry="36" fill="white" opacity="0.9" />
+                <ellipse cx="196" cy="67" rx="49" ry="35" fill="white" opacity="0.85" />
+                
+                {/* Bottom fill */}
+                <rect x="42" y="63" width="175" height="28" fill="white" opacity="0.9" />
+                
+                {/* Subtle shading */}
+                <ellipse cx="112" cy="84" rx="70" ry="21" fill="#e2e8f0" opacity="0.4" />
+                <ellipse cx="154" cy="87" rx="63" ry="17" fill="#cbd5e1" opacity="0.3" />
+              </g>
+              <defs>
+                <filter id={`cloud-shadow-${index}`} x="0" y="0" width="280" height="140" filterUnits="userSpaceOnUse">
+                  <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+                  <feOffset dy="3" result="offsetblur"/>
+                  <feComponentTransfer>
+                    <feFuncA type="linear" slope="0.3"/>
+                  </feComponentTransfer>
+                  <feMerge>
+                    <feMergeNode/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+            </svg>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

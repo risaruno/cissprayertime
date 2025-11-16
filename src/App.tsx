@@ -349,7 +349,7 @@ function App() {
 
   return (
     <div 
-      className="min-h-screen bg-cover bg-center bg-no-repeat relative flex flex-col"
+      className="min-h-screen bg-cover bg-center bg-no-repeat relative flex flex-col overflow-hidden"
       style={{ backgroundImage: `url(${backgroundImage})` }}
     >
       {/* Overlay gradient */}
@@ -393,18 +393,18 @@ function App() {
       </div>
 
       {/* Main Content Grid - Time/Weather Left, Hadith Right */}
-      <div className="relative z-10 flex-1 px-8 max-w-[1920px] mx-auto w-full">
+      <div className="relative z-10 flex-1 px-8 max-w-[1920px] mx-auto w-full flex items-start justify-center py-12">
         <div className="grid grid-cols-2 gap-8 h-full">
         {/* Left Side - Time and Weather */}
         <div className="flex flex-col gap-2">
-          {/* Date */}
-          <p className="text-xl text-white/90 drop-shadow-lg">
-            {calendar ? `${calendar.gregorian}  |  ${calendar.hijri}` : formatDate(currentTime)}
-          </p>
           {/* Current Time */}
           <h1 className="text-8xl font-bold text-white drop-shadow-2xl">
             {formatTime(currentTime)}
           </h1>
+          {/* Date */}
+          <p className="text-xl text-white/90 drop-shadow-lg">
+            {calendar ? `${calendar.gregorian}  |  ${calendar.hijri}` : formatDate(currentTime)}
+          </p>
 
           {/* Weather Info */}
           {weather && (
@@ -444,14 +444,12 @@ function App() {
         </div>
 
         {/* Right Side - Celestial Body (Sun/Moon with Clouds) */}
-        <div className="flex items-center justify-center">
-          <div className="w-full h-96">
-            <CelestialBody 
-              isDaytime={isDaytime()}
-              moonPhase={0.5}
-              showClouds={shouldShowClouds()}
-            />
-          </div>
+        <div className="flex items-center justify-end">
+          <CelestialBody 
+            isDaytime={isDaytime()}
+            moonPhase={weather?.moonPhase}
+            showClouds={shouldShowClouds()}
+          />
         </div>
         </div>
       </div>
