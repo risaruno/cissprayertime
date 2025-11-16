@@ -44,6 +44,7 @@ interface CalendarData {
 }
 
 const WEATHER_API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
+console.log('Weather API Key:', WEATHER_API_KEY);
 
 const QURAN_QUOTES = [
   '"Indeed, Allah is with those who are patient." - Quran 2:153',
