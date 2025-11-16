@@ -43,7 +43,7 @@ interface CalendarData {
   gregorian: string;
 }
 
-const WEATHER_API_KEY = 'b54309c9b04e978316c900d5f5149ab3';
+const WEATHER_API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
 
 const QURAN_QUOTES = [
   '"Indeed, Allah is with those who are patient." - Quran 2:153',
