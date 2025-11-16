@@ -414,9 +414,6 @@ function App() {
                 src={`/src/assets/weather/${weather.icon}.png`}
                 alt={weather.description}
                 className="w-24 h-24"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/src/assets/weather/Default.png';
-                }}
               />
               <div className="flex flex-col">
                 <span className="text-3xl font-semibold text-white drop-shadow-lg">
