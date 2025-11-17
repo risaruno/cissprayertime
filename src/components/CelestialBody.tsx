@@ -50,33 +50,32 @@ function CelestialBody({ isDaytime, moonPhase = 0.5, showClouds }: CelestialBody
   const moonStyle = getMoonPhaseStyle(moonPhase);
 
   // Determine how many clouds to show and their opacity
-  const cloudsToShow = showClouds ? cloudPositions : cloudPositions.slice(0, 1); // Show 1 cloud when not cloudy, all 3 when cloudy
+  const cloudsToShow = showClouds ? cloudPositions.slice(0, 2) : cloudPositions.slice(0, 1); // Show 1 cloud when not cloudy, 2 when cloudy (reduced from 3)
   const cloudOpacityMultiplier = showClouds ? 1 : 0.4; // Lighter clouds when not cloudy
 
   return (
     <div className="relative h-[400px] flex items-center justify-center">
-      {/* Sun (Daytime) */}
+      {/* Sun (Daytime) - Reduced animations for performance */}
       {isDaytime && (
         <div 
           className="relative z-20"
           style={{
-            animation: 'float-sun 8s ease-in-out infinite, sun-glow 4s ease-in-out infinite'
+            animation: 'float-sun 12s ease-in-out infinite', // Removed sun-glow, slower float (was 8s)
           }}
         >
           <div className="w-48 h-48 rounded-full bg-gradient-to-br from-yellow-200 via-yellow-400 to-orange-400 shadow-2xl relative">
-            {/* Sun core gradient */}
-            <div className="absolute inset-4 rounded-full bg-gradient-radial from-yellow-100 to-transparent" />
-            <div className="absolute inset-8 rounded-full bg-gradient-radial from-white to-transparent" />
+            {/* Simplified sun - removed extra gradient layers */}
+            <div className="absolute inset-8 rounded-full bg-gradient-radial from-white/60 to-transparent" />
           </div>
         </div>
       )}
 
-      {/* Moon (Nighttime) */}
+      {/* Moon (Nighttime) - Reduced animations for performance */}
       {!isDaytime && (
         <div 
           className="relative z-20"
           style={{
-            animation: 'float-moon 10s ease-in-out infinite, moon-glow 5s ease-in-out infinite'
+            animation: 'float-moon 15s ease-in-out infinite', // Removed moon-glow, slower float (was 10s)
           }}
         >
           <div 
@@ -86,61 +85,39 @@ function CelestialBody({ isDaytime, moonPhase = 0.5, showClouds }: CelestialBody
               boxShadow: moonStyle.shadow,
             }}
           >
-            {/* Moon craters */}
+            {/* Simplified moon craters - reduced from 5 to 3 */}
             <div className="absolute top-8 left-12 w-8 h-8 rounded-full bg-slate-700/30" />
-            <div className="absolute top-16 left-28 w-6 h-6 rounded-full bg-slate-700/25" />
             <div className="absolute top-24 left-8 w-10 h-10 rounded-full bg-slate-700/20" />
-            <div className="absolute top-28 left-24 w-5 h-5 rounded-full bg-slate-700/30" />
             <div className="absolute top-20 left-20 w-12 h-12 rounded-full bg-slate-700/15" />
-            
-            {/* Moon highlight */}
-            <div className="absolute inset-4 rounded-full bg-gradient-to-br from-white/20 to-transparent" />
           </div>
         </div>
       )}
 
-      {/* Clouds - Always show some clouds, more when weather is cloudy */}
+      {/* Clouds - Reduced count and slower animation */}
       <div className="absolute inset-0 pointer-events-none z-10">
         {cloudsToShow.map((cloud, index) => (
           <div
             key={index}
-            className="absolute"
+            className="absolute will-change-transform" // GPU acceleration hint
             style={{
               top: `${cloud.top}%`,
-              animation: `cloud-drift-${(index % 3) + 1} ${cloud.duration}s linear infinite`,
+              animation: `cloud-drift-${(index % 3) + 1} ${cloud.duration * 1.5}s linear infinite`, // 1.5x slower
               animationDelay: `${cloud.delay}s`,
-              transform: `scale(${cloud.size * 2})`, // Make clouds bigger (1.5x)
+              transform: `scale(${cloud.size * 2})`,
               opacity: cloud.opacity * cloudOpacityMultiplier,
             }}
           >
+            {/* Simplified cloud SVG - removed filter for better performance */}
             <svg width="280" height="112" viewBox="0 0 280 112" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <g filter="url(#cloud-shadow-${index})">
-                {/* Cloud shape - bigger version */}
-                <ellipse cx="70" cy="70" rx="49" ry="35" fill="white" opacity="0.9" />
-                <ellipse cx="112" cy="63" rx="56" ry="39" fill="white" opacity="0.95" />
-                <ellipse cx="154" cy="70" rx="53" ry="36" fill="white" opacity="0.9" />
-                <ellipse cx="196" cy="67" rx="49" ry="35" fill="white" opacity="0.85" />
+              <g>
+                {/* Simplified cloud shape - fewer ellipses */}
+                <ellipse cx="70" cy="70" rx="49" ry="35" fill="white" opacity="0.85" />
+                <ellipse cx="112" cy="63" rx="56" ry="39" fill="white" opacity="0.9" />
+                <ellipse cx="154" cy="70" rx="53" ry="36" fill="white" opacity="0.85" />
                 
                 {/* Bottom fill */}
-                <rect x="42" y="63" width="175" height="28" fill="white" opacity="0.9" />
-                
-                {/* Subtle shading */}
-                <ellipse cx="112" cy="84" rx="70" ry="21" fill="#e2e8f0" opacity="0.4" />
-                <ellipse cx="154" cy="87" rx="63" ry="17" fill="#cbd5e1" opacity="0.3" />
+                <rect x="42" y="63" width="175" height="28" fill="white" opacity="0.85" />
               </g>
-              <defs>
-                <filter id={`cloud-shadow-${index}`} x="0" y="0" width="280" height="140" filterUnits="userSpaceOnUse">
-                  <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
-                  <feOffset dy="3" result="offsetblur"/>
-                  <feComponentTransfer>
-                    <feFuncA type="linear" slope="0.3"/>
-                  </feComponentTransfer>
-                  <feMerge>
-                    <feMergeNode/>
-                    <feMergeNode in="SourceGraphic"/>
-                  </feMerge>
-                </filter>
-              </defs>
             </svg>
           </div>
         ))}

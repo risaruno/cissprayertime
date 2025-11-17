@@ -64,18 +64,19 @@
         z-index: 0;
         inset: 0;
       
-        /* Apple-style glass blur - more subtle */
-        backdrop-filter: blur(20px) saturate(180%);
-        -webkit-backdrop-filter: blur(20px) saturate(180%);
-        filter: url(#glass-distortion);
+        /* Reduced blur for better performance (was 20px) */
+        backdrop-filter: blur(12px) saturate(150%);
+        -webkit-backdrop-filter: blur(12px) saturate(150%);
+        /* Removed filter: url(#glass-distortion) for performance */
         overflow: hidden;
         isolation: isolate;
+        will-change: transform; /* GPU acceleration hint */
       }
       
-      /* Enhanced blur for active prayer */
+      /* Slightly enhanced blur for active prayer (was 24px) */
       .liquidGlass-wrapper.active .liquidGlass-effect {
-        backdrop-filter: blur(24px) saturate(200%);
-        -webkit-backdrop-filter: blur(24px) saturate(200%);
+        backdrop-filter: blur(14px) saturate(160%);
+        -webkit-backdrop-filter: blur(14px) saturate(160%);
       }
       
       .liquidGlass-tint {

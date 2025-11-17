@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { MapPin } from 'lucide-react';
 import Glass from './components/Glass';
 import CelestialBody from './components/CelestialBody';
+import PerformanceMonitor from './components/PerformanceMonitor';
 
 // Import background images
 import AfterAsr from './assets/bg/After Asr.png';
@@ -68,13 +69,13 @@ function App() {
   const [calendar, setCalendar] = useState<CalendarData | null>(null);
   const [countdown, setCountdown] = useState<string>('');
   
-  // format current time
+  // format current time - Update less frequently to save resources
   const [currentTime, setCurrentTime] = useState(new Date());
   
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
-    }, 1000);
+    }, 1000); // Keep at 1s for smooth clock
     return () => clearInterval(timer);
   }, []);
   
@@ -314,7 +315,7 @@ function App() {
       'Sunrise': 'Syuruq',
       'Dhuhr': 'Dzuhur',
       'Asr': 'Ashar',
-      'Maghrib': 'Margib',
+      'Maghrib': 'Maghrib',
       'Isha': 'Isya'
     };
     return nameMap[name] || name;
@@ -467,7 +468,7 @@ function App() {
                       <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 z-50">
                         <div className="bg-green-500/90 backdrop-blur-md rounded-lg px-4 py-2 shadow-xl border-2 border-green-400">
                           <div className="text-center">
-                            <p className="text-xs text-white/80 font-semibold mb-1">Time Until Prayer</p>
+                            <p className="text-xs text-white/80 font-semibold mb-1 whitespace-nowrap">Time Until Prayer</p>
                             <p className="text-2xl font-bold text-white font-mono">{countdown}</p>
                           </div>
                           {/* Arrow pointing down */}
@@ -504,7 +505,7 @@ function App() {
             <div className="liquidGlass-text w-full">
               <div className="py-5 border-t border-white/10">
                 <div className="overflow-hidden relative">
-                  <div className="animate-scroll-infinite whitespace-nowrap flex items-center">
+                  <div className="animate-scroll-infinite whitespace-nowrap flex items-center will-change-transform">
                     {/* Create alternating pattern: quote -> bank -> quote -> bank */}
                     {QURAN_QUOTES.map((quote, index) => (
                       <div key={`group-${index}`} className="inline-flex items-center">
@@ -579,6 +580,9 @@ function App() {
           </div>
         </div>
       </div>
+
+      {/* Performance Monitor - Debug Tool */}
+      <PerformanceMonitor />
     </div>
   );
 }

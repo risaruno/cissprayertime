@@ -34,12 +34,13 @@
   }
 }
 
+/* Optimized scroll animation with GPU acceleration */
 @keyframes scroll-infinite {
   0% {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translate3d(-50%, 0, 0);
   }
 }
 
@@ -54,68 +55,50 @@
   }
 }
 
-/* Sun animation - gentle floating and glowing */
+/* Sun animation - simplified, gentle floating only (no glow for performance) */
 @keyframes float-sun {
   0%, 100% {
     transform: translateY(0px);
   }
   50% {
-    transform: translateY(-20px);
+    transform: translateY(-15px);
   }
 }
 
-@keyframes sun-glow {
-  0%, 100% {
-    filter: drop-shadow(0 0 30px rgba(255, 200, 0, 0.8)) drop-shadow(0 0 60px rgba(255, 150, 0, 0.6));
-  }
-  50% {
-    filter: drop-shadow(0 0 50px rgba(255, 200, 0, 1)) drop-shadow(0 0 90px rgba(255, 150, 0, 0.8));
-  }
-}
-
-/* Moon animation - gentle floating and glowing */
+/* Moon animation - simplified, gentle floating only (no glow for performance) */
 @keyframes float-moon {
   0%, 100% {
-    transform: translateY(0px) rotate(0deg);
+    transform: translateY(0px);
   }
   50% {
-    transform: translateY(-15px) rotate(5deg);
+    transform: translateY(-10px);
   }
 }
 
-@keyframes moon-glow {
-  0%, 100% {
-    filter: drop-shadow(0 0 20px rgba(200, 220, 255, 0.8)) drop-shadow(0 0 40px rgba(150, 180, 255, 0.5));
-  }
-  50% {
-    filter: drop-shadow(0 0 35px rgba(200, 220, 255, 1)) drop-shadow(0 0 60px rgba(150, 180, 255, 0.7));
-  }
-}
-
-/* Cloud animations - realistic drift */
+/* Cloud animations - simplified for better performance, use transform3d for GPU acceleration */
 @keyframes cloud-drift-1 {
   0% {
-    transform: translateX(-100%);
+    transform: translate3d(-100%, 0, 0);
   }
   100% {
-    transform: translateX(100vw);
+    transform: translate3d(100vw, 0, 0);
   }
 }
 
 @keyframes cloud-drift-2 {
   0% {
-    transform: translateX(-150%);
+    transform: translate3d(-150%, 0, 0);
   }
   100% {
-    transform: translateX(110vw);
+    transform: translate3d(110vw, 0, 0);
   }
 }
 
 @keyframes cloud-drift-3 {
   0% {
-    transform: translateX(-120%);
+    transform: translate3d(-120%, 0, 0);
   }
   100% {
-    transform: translateX(105vw);
+    transform: translate3d(105vw, 0, 0);
   }
 }

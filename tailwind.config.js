@@ -15,12 +15,12 @@ export default {
         lg: '12px 8px 8px var(--tw-shadow-color)',
       },
       animation: {
-        'scroll-infinite': 'scroll-infinite 30s linear infinite',
+        'scroll-infinite': 'scroll-infinite 90s linear infinite', // Slower scroll (was 60s) for better performance
       },
       keyframes: {
         'scroll-infinite': {
-          '0%': { transform: 'translateX(0)' },
-          '100%': { transform: 'translateX(-50%)' },
+          '0%': { transform: 'translate3d(0, 0, 0)' }, // Use translate3d for GPU acceleration
+          '100%': { transform: 'translate3d(-50%, 0, 0)' },
         },
       },
     },
