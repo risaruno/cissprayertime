@@ -68,6 +68,7 @@ function App() {
   const [backgroundImage, setBackgroundImage] = useState(Syurk);
   const [calendar, setCalendar] = useState<CalendarData | null>(null);
   const [countdown, setCountdown] = useState<string>('');
+  const [lastFetchDate, setLastFetchDate] = useState<string>('');
   
   // format current time - Update less frequently to save resources
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -122,6 +123,8 @@ function App() {
     setLoading(true);
     try {
       const date = new Date();
+      const dateString = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+      
       const response = await fetch(
         `https://api.aladhan.com/v1/timingsByCity/${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}?city=${city}&country=&method=3`
       );
@@ -145,6 +148,9 @@ function App() {
           hijri: `${data.data.date.hijri.day} ${data.data.date.hijri.month.en} ${data.data.date.hijri.year} H`,
           gregorian: `${data.data.date.gregorian.weekday.en}, ${data.data.date.gregorian.day} ${data.data.date.gregorian.month.en} ${data.data.date.gregorian.year}`
         });
+        
+        // Update last fetch date
+        setLastFetchDate(dateString);
       }
     } catch (err) {
       console.error('Error fetching prayer times:', err);
@@ -290,6 +296,26 @@ function App() {
     
     return () => clearInterval(interval);
   }, [nextPrayer]);
+
+  // Auto-refresh prayer times daily at midnight for Smart TVs
+  useEffect(() => {
+    const checkAndRefresh = () => {
+      const now = new Date();
+      const currentDateString = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+      
+      // If the date has changed since last fetch, refresh data
+      if (lastFetchDate && currentDateString !== lastFetchDate) {
+        console.log('Day changed - refreshing prayer times and weather');
+        fetchPrayerTimes(location);
+        fetchWeather(location);
+      }
+    };
+    
+    // Check every minute for day change
+    const interval = setInterval(checkAndRefresh, 60000);
+    
+    return () => clearInterval(interval);
+  }, [lastFetchDate, location, fetchPrayerTimes, fetchWeather]);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', { 
