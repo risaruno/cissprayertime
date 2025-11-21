@@ -34,9 +34,10 @@ const getMoonPhaseStyle = (phase: number) => {
 
 function CelestialBody({ isDaytime, moonPhase = 0.5, showClouds }: CelestialBodyProps) {
   const [cloudPositions, setCloudPositions] = useState([
-    { top: 15, duration: 80, delay: 0, size: 1.2, opacity: 0.85 },
-    { top: 35, duration: 100, delay: 10, size: 1, opacity: 0.75 },
-    { top: 55, duration: 90, delay: 25, size: 1.1, opacity: 0.8 },
+    { top: 10, duration: 70, delay: 0, size: 1.3, opacity: 0.9 },
+    { top: 30, duration: 85, delay: 8, size: 1.1, opacity: 0.85 },
+    { top: 50, duration: 80, delay: 20, size: 1.2, opacity: 0.88 },
+    { top: 20, duration: 90, delay: 35, size: 1.0, opacity: 0.82 },
   ]);
 
   useEffect(() => {
@@ -50,11 +51,11 @@ function CelestialBody({ isDaytime, moonPhase = 0.5, showClouds }: CelestialBody
   const moonStyle = getMoonPhaseStyle(moonPhase);
 
   // Determine how many clouds to show and their opacity
-  const cloudsToShow = showClouds ? cloudPositions.slice(0, 2) : cloudPositions.slice(0, 1); // Show 1 cloud when not cloudy, 2 when cloudy (reduced from 3)
-  const cloudOpacityMultiplier = showClouds ? 1 : 0.4; // Lighter clouds when not cloudy
+  const cloudsToShow = showClouds ? cloudPositions : cloudPositions.slice(0, 1); // Show 4 clouds when cloudy, 1 when not
+  const cloudOpacityMultiplier = showClouds ? 1 : 0.3; // Lighter clouds when not cloudy
 
   return (
-    <div className="relative h-[400px] flex items-center justify-center">
+    <div className="relative h-[200px] flex items-center justify-center">
       {/* Sun (Daytime) - Reduced animations for performance */}
       {isDaytime && (
         <div 
@@ -101,7 +102,7 @@ function CelestialBody({ isDaytime, moonPhase = 0.5, showClouds }: CelestialBody
             className="absolute will-change-transform" // GPU acceleration hint
             style={{
               top: `${cloud.top}%`,
-              animation: `cloud-drift-${(index % 3) + 1} ${cloud.duration * 1.5}s linear infinite`, // 1.5x slower
+              animation: `cloud-drift-${(index % 3) + 1} ${showClouds ? cloud.duration : cloud.duration * 1.5}s linear infinite`, // Faster when cloudy
               animationDelay: `${cloud.delay}s`,
               transform: `scale(${cloud.size * 2})`,
               opacity: cloud.opacity * cloudOpacityMultiplier,

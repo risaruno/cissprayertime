@@ -34,7 +34,7 @@
   }
 }
 
-/* Optimized scroll animation with GPU acceleration */
+/* Optimized scroll animation with GPU acceleration - faster speed */
 @keyframes scroll-infinite {
   0% {
     transform: translate3d(0, 0, 0);

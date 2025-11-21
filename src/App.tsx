@@ -21,6 +21,27 @@ import Syurk from './assets/bg/Syurk.png';
 import LeftLogo from './assets/logo/left.png';
 import RightLogo from './assets/logo/right.png';
 
+// Import weather icons (only files that exist: 01-09)
+import weather01d from './assets/weather/01d.png';
+import weather01n from './assets/weather/01n.png';
+import weather02d from './assets/weather/02d.png';
+import weather02n from './assets/weather/02n.png';
+import weather03d from './assets/weather/03d.png';
+import weather03n from './assets/weather/03n.png';
+import weather04d from './assets/weather/04d.png';
+import weather04n from './assets/weather/04n.png';
+import weather05d from './assets/weather/05d.png';
+import weather05n from './assets/weather/05n.png';
+import weather06d from './assets/weather/06d.png';
+import weather06n from './assets/weather/06n.png';
+import weather07d from './assets/weather/07d.png';
+import weather07n from './assets/weather/07n.png';
+import weather08d from './assets/weather/08d.png';
+import weather08n from './assets/weather/08n.png';
+import weather09d from './assets/weather/09d.png';
+import weather09n from './assets/weather/09n.png';
+import weatherDefault from './assets/weather/Default.png';
+
 interface PrayerTimes {
   Fajr: string;
   Sunrise: string;
@@ -70,15 +91,31 @@ function App() {
   const [countdown, setCountdown] = useState<string>('');
   const [lastFetchDate, setLastFetchDate] = useState<string>('');
   
+  // Debug: Override time for testing (set to null to use real time)
+  const [debugTime, setDebugTime] = useState<Date | null>(null);
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
+  
+  // Iqamah times (minutes after adhan)
+  const [iqamahTimes, setIqamahTimes] = useState<{ [key: string]: number }>({
+    'Fajr': 20,
+    'Dhuhr': 10,
+    'Asr': 10,
+    'Maghrib': 5,
+    'Isha': 10
+  });
+  const [iqamahCountdown, setIqamahCountdown] = useState<string>('');
+  const [iqamahTooltipDelay, setIqamahTooltipDelay] = useState<number>(15); // minutes after adhan to show iqamah tooltip
+  const [showIqamahTooltip, setShowIqamahTooltip] = useState<boolean>(false);
+  
   // format current time - Update less frequently to save resources
   const [currentTime, setCurrentTime] = useState(new Date());
   
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentTime(new Date());
+      setCurrentTime(debugTime || new Date());
     }, 1000); // Keep at 1s for smooth clock
     return () => clearInterval(timer);
-  }, []);
+  }, [debugTime]);
   
 
   // Fetch weather data
@@ -159,8 +196,8 @@ function App() {
   }, []);
 
   // Update next prayer
-  const updateNextPrayer = (times: PrayerTimes) => {
-    const now = new Date();
+  const updateNextPrayer = (times: PrayerTimes, currentTimeParam?: Date) => {
+    const now = currentTimeParam || new Date();
     // Exclude Sunrise from next prayer calculation (it's not a prayer time)
     const prayers = Object.entries(times).filter(([name]) => name !== 'Sunrise');
     const todayPrayers = prayers.map(([name, time]) => {
@@ -185,10 +222,10 @@ function App() {
   };
 
   // Determine background based on time of day
-  const updateBackground = useCallback((times: PrayerTimes | null) => {
+  const updateBackground = useCallback((times: PrayerTimes | null, currentTimeParam?: Date) => {
     if (!times) return;
     
-    const now = new Date();
+    const now = currentTimeParam || new Date();
     const currentHour = now.getHours();
     const currentMinutes = now.getMinutes();
     const currentTimeInMinutes = currentHour * 60 + currentMinutes;
@@ -264,38 +301,86 @@ function App() {
       fetchPrayerTimes(location);
       fetchWeather(location);
     }
-  }, [fetchPrayerTimes, fetchWeather]);
+  }, [fetchPrayerTimes, fetchWeather, location]);
 
   // Update background every minute
   useEffect(() => {
-    updateBackground(prayerTimes);
+    updateBackground(prayerTimes, currentTime);
     const interval = setInterval(() => {
-      updateBackground(prayerTimes);
+      updateBackground(prayerTimes, currentTime);
     }, 60000); // Update every minute
     
     return () => clearInterval(interval);
-  }, [prayerTimes, updateBackground]);
+  }, [prayerTimes, updateBackground, currentTime]);
 
-  // Update countdown every second
+  // Update next prayer and background when currentTime changes (for debug mode)
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (nextPrayer) {
-        const now = new Date();
-        const timeLeft = nextPrayer.time.getTime() - now.getTime();
+    if (prayerTimes) {
+      updateNextPrayer(prayerTimes, currentTime);
+      updateBackground(prayerTimes, currentTime);
+    }
+  }, [currentTime, prayerTimes, updateBackground]);
+
+  // Update countdown based on currentTime (syncs with both debug and real time)
+  useEffect(() => {
+    if (nextPrayer) {
+      const now = currentTime;
+      const timeLeft = nextPrayer.time.getTime() - now.getTime();
+      const timeSinceAdhan = now.getTime() - nextPrayer.time.getTime();
+      const minutesSinceAdhan = timeSinceAdhan / 60000;
+      
+      // Show adhan tooltip before prayer time
+      if (timeLeft > 0) {
+        const hours = Math.floor(timeLeft / 3600000);
+        const minutes = Math.floor((timeLeft % 3600000) / 60000);
+        const seconds = Math.floor((timeLeft % 60000) / 1000);
+        setCountdown(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+        setShowIqamahTooltip(false);
         
-        if (timeLeft > 0) {
-          const hours = Math.floor(timeLeft / 3600000);
-          const minutes = Math.floor((timeLeft % 3600000) / 60000);
-          const seconds = Math.floor((timeLeft % 60000) / 1000);
-          setCountdown(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+        // Calculate iqamah time for display in adhan tooltip
+        if (nextPrayer.name !== 'Sunrise' && iqamahTimes[nextPrayer.name]) {
+          const iqamahTime = new Date(nextPrayer.time.getTime() + iqamahTimes[nextPrayer.name] * 60 * 1000);
+          const iqamahTimeLeft = iqamahTime.getTime() - now.getTime();
+          
+          if (iqamahTimeLeft > 0) {
+            const iqHours = Math.floor(iqamahTimeLeft / 3600000);
+            const iqMinutes = Math.floor((iqamahTimeLeft % 3600000) / 60000);
+            const iqSeconds = Math.floor((iqamahTimeLeft % 60000) / 1000);
+            setIqamahCountdown(`${iqHours.toString().padStart(2, '0')}:${iqMinutes.toString().padStart(2, '0')}:${iqSeconds.toString().padStart(2, '0')}`);
+          } else {
+            setIqamahCountdown('');
+          }
         } else {
-          setCountdown('');
+          setIqamahCountdown('');
         }
+      } 
+      // Show iqamah tooltip after iqamahTooltipDelay minutes past adhan
+      else if (minutesSinceAdhan >= iqamahTooltipDelay && nextPrayer.name !== 'Sunrise' && iqamahTimes[nextPrayer.name]) {
+        setCountdown('');
+        const iqamahTime = new Date(nextPrayer.time.getTime() + iqamahTimes[nextPrayer.name] * 60 * 1000);
+        const iqamahTimeLeft = iqamahTime.getTime() - now.getTime();
+        
+        if (iqamahTimeLeft > 0) {
+          const iqHours = Math.floor(iqamahTimeLeft / 3600000);
+          const iqMinutes = Math.floor((iqamahTimeLeft % 3600000) / 60000);
+          const iqSeconds = Math.floor((iqamahTimeLeft % 60000) / 1000);
+          setIqamahCountdown(`${iqHours.toString().padStart(2, '0')}:${iqMinutes.toString().padStart(2, '0')}:${iqSeconds.toString().padStart(2, '0')}`);
+          setShowIqamahTooltip(true);
+        } else {
+          setIqamahCountdown('');
+          setShowIqamahTooltip(false);
+        }
+      } else {
+        setCountdown('');
+        setIqamahCountdown('');
+        setShowIqamahTooltip(false);
       }
-    }, 1000);
-    
-    return () => clearInterval(interval);
-  }, [nextPrayer]);
+    } else {
+      setCountdown('');
+      setIqamahCountdown('');
+      setShowIqamahTooltip(false);
+    }
+  }, [nextPrayer, iqamahTimes, iqamahTooltipDelay, currentTime]);
 
   // Auto-refresh prayer times daily at midnight for Smart TVs
   useEffect(() => {
@@ -347,11 +432,46 @@ function App() {
     return nameMap[name] || name;
   };
 
+  // Get weather icon from imported assets
+  // Map OpenWeather icon codes to our available assets (01-09)
+  const getWeatherIcon = (iconCode: string) => {
+    const iconMap: { [key: string]: string } = {
+      '01d': weather01d,  // clear sky day
+      '01n': weather01n,  // clear sky night
+      '02d': weather02d,  // few clouds day
+      '02n': weather02n,  // few clouds night
+      '03d': weather03d,  // scattered clouds day
+      '03n': weather03n,  // scattered clouds night
+      '04d': weather04d,  // broken clouds day
+      '04n': weather04n,  // broken clouds night
+      '05d': weather05d,  // custom icon
+      '05n': weather05n,  // custom icon
+      '06d': weather06d,  // custom icon
+      '06n': weather06n,  // custom icon
+      '07d': weather07d,  // custom icon
+      '07n': weather07n,  // custom icon
+      '08d': weather08d,  // custom icon
+      '08n': weather08n,  // custom icon
+      '09d': weather09d,  // shower rain day
+      '09n': weather09n,  // shower rain night
+      // Map OpenWeather codes that don't have direct assets
+      '10d': weather09d,  // rain -> use shower icon
+      '10n': weather09n,  // rain night
+      '11d': weather09d,  // thunderstorm -> use rain icon
+      '11n': weather09n,  // thunderstorm night
+      '13d': weather08d,  // snow -> use icon 08
+      '13n': weather08n,  // snow night
+      '50d': weather07d,  // mist/fog -> use icon 07
+      '50n': weather07n,  // mist/fog night
+    };
+    return iconMap[iconCode] || weatherDefault;
+  };
+
   // Determine if it's daytime based on prayer times
   const isDaytime = () => {
     if (!prayerTimes) return true; // Default to day
     
-    const now = new Date();
+    const now = currentTime;
     const currentTimeInMinutes = now.getHours() * 60 + now.getMinutes();
     
     const parseTime = (time: string) => {
@@ -382,11 +502,11 @@ function App() {
       {/* Overlay gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/40" />
 
-      {/* Mosque Header - Top Center with Logos */}
-      <div className="relative z-10 py-6 px-8">
-        <div className="flex items-center justify-center gap-8">
+      {/* Mosque Header - Top Center with Logos - BIGGER */}
+      <div className="relative z-10 py-10 px-8">
+        <div className="flex items-center justify-center gap-12">
           {/* Left Logo */}
-          <div className="w-20 h-20 rounded-full bg-white/95 flex items-center justify-center p-2 shadow-2xl backdrop-blur-sm transition-transform hover:scale-105 flex-shrink-0">
+          <div className="w-32 h-32 rounded-full bg-white/95 flex items-center justify-center p-3 shadow-2xl backdrop-blur-sm transition-transform hover:scale-105 flex-shrink-0">
             <img 
               src={LeftLogo}
               alt="Masjid Logo" 
@@ -396,20 +516,20 @@ function App() {
 
           {/* Mosque Info */}
           <div className="text-center flex-shrink-0">
-            <h1 className="text-4xl font-bold text-white drop-shadow-2xl mb-1">
+            <h1 className="text-6xl font-bold text-white drop-shadow-2xl mb-2">
               Masjid Al-Falah, Seoul
             </h1>
-            <h2 className="text-xl font-semibold text-white/90 drop-shadow-lg mb-1">
+            <h2 className="text-3xl font-semibold text-white/90 drop-shadow-lg mb-2">
               Center of Islamic Studies Seoul
             </h2>
-            <div className="flex items-center justify-center gap-2 text-lg text-white/90 drop-shadow-lg">
-              <MapPin className="w-4 h-4" />
+            <div className="flex items-center justify-center gap-3 text-2xl text-white/90 drop-shadow-lg">
+              <MapPin className="w-6 h-6" />
               <p>서울특별시 영등포구 신길로 60다길21</p>
             </div>
           </div>
 
           {/* Right Logo */}
-          <div className="w-20 h-20 rounded-full bg-white/95 flex items-center justify-center p-2 shadow-2xl backdrop-blur-sm transition-transform hover:scale-105 flex-shrink-0">
+          <div className="w-32 h-32 rounded-full bg-white/95 flex items-center justify-center p-3 shadow-2xl backdrop-blur-sm transition-transform hover:scale-105 flex-shrink-0">
             <img 
               src={RightLogo}
               alt="CISS Logo" 
@@ -422,30 +542,30 @@ function App() {
       {/* Main Content Grid - Time/Weather Left, Hadith Right */}
       <div className="relative z-10 flex-1 px-8 max-w-[1920px] mx-auto w-full flex items-start justify-center py-12">
         <div className="grid grid-cols-2 gap-8 h-full">
-        {/* Left Side - Time and Weather */}
-        <div className="flex flex-col gap-2">
+        {/* Left Side - Time and Weather - SMALLER */}
+        <div className="flex flex-col gap-1">
           {/* Current Time */}
-          <h1 className="text-8xl font-bold text-white drop-shadow-2xl">
+          <h1 className="text-6xl font-bold text-white drop-shadow-2xl">
             {formatTime(currentTime)}
           </h1>
           {/* Date */}
-          <p className="text-xl text-white/90 drop-shadow-lg">
+          <p className="text-lg text-white/90 drop-shadow-lg">
             {calendar ? `${calendar.gregorian}  |  ${calendar.hijri}` : formatDate(currentTime)}
           </p>
 
           {/* Weather Info */}
           {weather && (
-            <div className="flex items-center gap-3 mt-2">
+            <div className="flex items-center gap-2 mt-1">
               <img 
-                src={`/weather/${weather.icon}.png`}
+                src={getWeatherIcon(weather.icon)}
                 alt={weather.description}
-                className="w-24 h-24"
+                className="w-16 h-16"
               />
               <div className="flex flex-col">
-                <span className="text-3xl font-semibold text-white drop-shadow-lg">
+                <span className="text-2xl font-semibold text-white drop-shadow-lg">
                   {Math.round(weather.temp)}°C
                 </span>
-                <span className="text-lg text-white/80 drop-shadow-md capitalize">
+                <span className="text-base text-white/80 drop-shadow-md capitalize">
                   {weather.description}
                 </span>
                 {/* Location */}
@@ -489,16 +609,34 @@ function App() {
                 
                 return (
                   <div key={prayer} className="relative">
-                    {/* Countdown Tooltip */}
+                    {/* Adhan Countdown Tooltip - Green */}
                     {isActive && countdown && (
                       <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 z-50">
-                        <div className="bg-green-500/90 backdrop-blur-md rounded-lg px-4 py-2 shadow-xl border-2 border-green-400">
-                          <div className="text-center">
-                            <p className="text-xs text-white/80 font-semibold mb-1 whitespace-nowrap">Time Until Prayer</p>
-                            <p className="text-2xl font-bold text-white font-mono">{countdown}</p>
+                        <div className="bg-gradient-to-br from-green-500/95 to-green-600/95 backdrop-blur-md rounded-lg px-6 py-3 shadow-xl border-2 border-green-400">
+                          <div className="text-center space-y-2">
+                            {/* Adhan Time */}
+                            <div>
+                              <p className="text-xs text-white/90 font-semibold mb-1 whitespace-nowrap">Time Until Adhan</p>
+                              <p className="text-2xl font-bold text-white font-mono">{countdown}</p>
+                            </div>
                           </div>
                           {/* Arrow pointing down */}
-                          <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-green-500/90"></div>
+                          <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-green-600/95"></div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Iqamah Countdown Tooltip - Orange (appears after delay) */}
+                    {isActive && showIqamahTooltip && iqamahCountdown && !isSyuruq && (
+                      <div className="absolute -top-20 left-1/2 transform -translate-x-1/2 z-50">
+                        <div className="bg-gradient-to-br from-orange-500/95 to-orange-600/95 backdrop-blur-md rounded-lg px-6 py-3 shadow-xl border-2 border-orange-400">
+                          <div className="text-center">
+                            <p className="text-xs text-white/90 font-semibold mb-1 whitespace-nowrap">⏱️ Time Until Iqamah</p>
+                            <p className="text-3xl font-bold text-white font-mono">{iqamahCountdown}</p>
+                            <p className="text-xs text-orange-100/90 mt-2">{iqamahTimes[prayer]} minutes after adhan</p>
+                          </div>
+                          {/* Arrow pointing down */}
+                          <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-orange-600/95"></div>
                         </div>
                       </div>
                     )}
@@ -609,6 +747,153 @@ function App() {
 
       {/* Performance Monitor - Debug Tool */}
       <PerformanceMonitor />
+
+      {/* Debug Time Control Panel */}
+      <div className="fixed top-4 right-4 z-50">
+        {!showDebugPanel ? (
+          <button
+            onClick={() => setShowDebugPanel(true)}
+            className="bg-purple-600/90 hover:bg-purple-700/90 text-white px-4 py-2 rounded-lg shadow-xl font-mono text-sm backdrop-blur-sm transition-colors"
+          >
+            🕐 Debug Time
+          </button>
+        ) : (
+          <div className="bg-black/90 backdrop-blur-sm text-white p-4 rounded-lg shadow-2xl border border-purple-500/50 font-mono text-sm min-w-[320px]">
+            <div className="flex items-center justify-between mb-3 border-b border-white/20 pb-2">
+              <h3 className="font-bold text-purple-400">⏰ Time Debug Control</h3>
+              <button
+                onClick={() => setShowDebugPanel(false)}
+                className="text-white/60 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="space-y-3">
+              {/* Current Time Display */}
+              <div className="bg-purple-900/30 p-2 rounded border border-purple-500/30">
+                <div className="text-xs text-purple-300 mb-1">Current Time:</div>
+                <div className="text-lg font-bold text-white">
+                  {formatTime(currentTime)}
+                </div>
+                <div className="text-xs text-white/70">
+                  {formatDate(currentTime)}
+                </div>
+              </div>
+
+              {/* Time Input */}
+              <div>
+                <label className="text-xs text-white/70 block mb-1">Set Debug Time:</label>
+                <input
+                  type="time"
+                  className="w-full bg-gray-800 text-white px-3 py-2 rounded border border-purple-500/50 focus:border-purple-400 focus:outline-none"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      const [hours, minutes] = e.target.value.split(':');
+                      const newTime = new Date();
+                      newTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+                      setDebugTime(newTime);
+                    }
+                  }}
+                />
+              </div>
+
+              {/* Quick Time Buttons */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => {
+                    const time = new Date();
+                    time.setHours(5, 0, 0, 0); // Fajr
+                    setDebugTime(time);
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded text-xs transition-colors"
+                >
+                  Fajr (05:00)
+                </button>
+                <button
+                  onClick={() => {
+                    const time = new Date();
+                    time.setHours(12, 30, 0, 0); // Dhuhr
+                    setDebugTime(time);
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded text-xs transition-colors"
+                >
+                  Dhuhr (12:30)
+                </button>
+                <button
+                  onClick={() => {
+                    const time = new Date();
+                    time.setHours(15, 30, 0, 0); // Asr
+                    setDebugTime(time);
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded text-xs transition-colors"
+                >
+                  Asr (15:30)
+                </button>
+                <button
+                  onClick={() => {
+                    const time = new Date();
+                    time.setHours(18, 0, 0, 0); // Maghrib
+                    setDebugTime(time);
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded text-xs transition-colors"
+                >
+                  Maghrib (18:00)
+                </button>
+              </div>
+
+              {/* Reset Button */}
+              <button
+                onClick={() => setDebugTime(null)}
+                className="w-full bg-red-600/80 hover:bg-red-700/80 px-3 py-2 rounded text-sm transition-colors font-semibold"
+              >
+                ↻ Reset to Real Time
+              </button>
+
+              {debugTime && (
+                <div className="text-xs text-green-400 text-center">
+                  ✓ Debug mode active
+                </div>
+              )}
+
+              {/* Iqamah Time Settings */}
+              <div className="border-t border-white/20 pt-3 mt-2">
+                <h4 className="text-xs text-orange-300 font-bold mb-2">⏱️ Iqamah Times (minutes after adhan)</h4>
+                <div className="space-y-2">
+                  {['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].map((prayer) => (
+                    <div key={prayer} className="flex items-center justify-between">
+                      <label className="text-xs text-white/70 w-20">{prayer}:</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="30"
+                        value={iqamahTimes[prayer]}
+                        onChange={(e) => setIqamahTimes({ ...iqamahTimes, [prayer]: parseInt(e.target.value) || 0 })}
+                        className="w-16 bg-gray-800 text-white px-2 py-1 rounded border border-orange-500/50 focus:border-orange-400 focus:outline-none text-center text-sm"
+                      />
+                      <span className="text-xs text-white/50 ml-1">min</span>
+                    </div>
+                  ))}
+                  <div className="border-t border-orange-500/20 pt-2 mt-2">
+                    <label className="text-xs text-orange-200 block mb-1">Show Iqamah Tooltip After:</label>
+                    <div className="flex items-center justify-between">
+                      <input
+                        type="number"
+                        min="0"
+                        max="30"
+                        value={iqamahTooltipDelay}
+                        onChange={(e) => setIqamahTooltipDelay(parseInt(e.target.value) || 0)}
+                        className="w-16 bg-gray-800 text-white px-2 py-1 rounded border border-orange-500/50 focus:border-orange-400 focus:outline-none text-center text-sm"
+                      />
+                      <span className="text-xs text-white/50 ml-1">min past adhan</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
