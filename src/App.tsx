@@ -58,6 +58,8 @@ interface WeatherData {
   location: string;
   main: string;
   moonPhase?: number; // 0-1, where 0/1 = new moon, 0.5 = full moon
+  latitude?: number;
+  longitude?: number;
 }
 
 interface CalendarData {
@@ -148,7 +150,9 @@ function App() {
           icon: data.weather[0].icon,
           location: data.name,
           main: data.weather[0].main,
-          moonPhase
+          moonPhase,
+          latitude: data.coord.lat,
+          longitude: data.coord.lon
         });
       }
     } catch (err) {
@@ -594,6 +598,8 @@ function App() {
             isDaytime={isDaytime()}
             moonPhase={weather?.moonPhase}
             showClouds={shouldShowClouds()}
+            latitude={weather?.latitude}
+            longitude={weather?.longitude}
           />
         </div>
         </div>
