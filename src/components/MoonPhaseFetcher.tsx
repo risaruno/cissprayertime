@@ -14,6 +14,10 @@ interface MoonPhaseFetcherProps {
 const ASTR_APP_ID = import.meta.env.VITE_ASTR_APP_ID;
 const ASTR_API_KEY = import.meta.env.VITE_ASTR_API_KEY;
 
+// Note: Moon phase images are fetched once per location change.
+// The API call is intentionally not cached to ensure accuracy when location changes.
+// Consider implementing caching by date if API rate limits become a concern.
+
 export const useMoonPhase = (latitude: number, longitude: number) => {
   const [moonPhaseImage, setMoonPhaseImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -90,6 +94,9 @@ export const useMoonPhase = (latitude: number, longitude: number) => {
   return { moonPhaseImage, loading, error };
 };
 
+// MoonPhaseFetcher component is provided for optional imperative usage patterns
+// where you need to fetch moon phase data and handle it via callback.
+// Most use cases should use the useMoonPhase hook directly (as done in CelestialBody).
 function MoonPhaseFetcher({ latitude, longitude, onFetchComplete }: MoonPhaseFetcherProps) {
   const { moonPhaseImage, error } = useMoonPhase(latitude, longitude);
 

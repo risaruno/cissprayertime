@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useMoonPhase } from './MoonPhaseFetcher';
 
+// Default location: Seoul, South Korea
+const DEFAULT_LATITUDE = 37.5665;
+const DEFAULT_LONGITUDE = 126.9780;
+
 interface CelestialBodyProps {
   isDaytime: boolean;
   moonPhase?: number; // 0-1, where 0/1 = new moon, 0.5 = full moon (fallback)
@@ -35,7 +39,7 @@ const getMoonPhaseStyle = (phase: number) => {
   }
 };
 
-function CelestialBody({ isDaytime, moonPhase = 0.5, showClouds, latitude = 37.5665, longitude = 126.9780 }: CelestialBodyProps) {
+function CelestialBody({ isDaytime, moonPhase = 0.5, showClouds, latitude = DEFAULT_LATITUDE, longitude = DEFAULT_LONGITUDE }: CelestialBodyProps) {
   const [cloudPositions, setCloudPositions] = useState([
     { top: 10, duration: 70, delay: 0, size: 1.3, opacity: 0.9 },
     { top: 30, duration: 85, delay: 8, size: 1.1, opacity: 0.85 },
