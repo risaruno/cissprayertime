@@ -1,9 +1,16 @@
 import { useEffect, useState } from 'react';
+import { useMoonPhase } from './MoonPhaseFetcher';
+
+// Default location: Seoul, South Korea
+const DEFAULT_LATITUDE = 37.5665;
+const DEFAULT_LONGITUDE = 126.9780;
 
 interface CelestialBodyProps {
   isDaytime: boolean;
-  moonPhase?: number; // 0-1, where 0/1 = new moon, 0.5 = full moon
+  moonPhase?: number; // 0-1, where 0/1 = new moon, 0.5 = full moon (fallback)
   showClouds: boolean;
+  latitude?: number;
+  longitude?: number;
 }
 
 // Moon phase calculation helper
@@ -32,13 +39,16 @@ const getMoonPhaseStyle = (phase: number) => {
   }
 };
 
-function CelestialBody({ isDaytime, moonPhase = 0.5, showClouds }: CelestialBodyProps) {
+function CelestialBody({ isDaytime, moonPhase = 0.5, showClouds, latitude = DEFAULT_LATITUDE, longitude = DEFAULT_LONGITUDE }: CelestialBodyProps) {
   const [cloudPositions, setCloudPositions] = useState([
     { top: 10, duration: 70, delay: 0, size: 1.3, opacity: 0.9 },
     { top: 30, duration: 85, delay: 8, size: 1.1, opacity: 0.85 },
     { top: 50, duration: 80, delay: 20, size: 1.2, opacity: 0.88 },
     { top: 20, duration: 90, delay: 35, size: 1.0, opacity: 0.82 },
   ]);
+
+  // Fetch moon phase image from Astronomy API
+  const { moonPhaseImage, loading: moonLoading } = useMoonPhase(latitude, longitude);
 
   useEffect(() => {
     // Randomize cloud positions slightly on mount for variety
@@ -71,7 +81,7 @@ function CelestialBody({ isDaytime, moonPhase = 0.5, showClouds }: CelestialBody
         </div>
       )}
 
-      {/* Moon (Nighttime) - Reduced animations for performance */}
+      {/* Moon (Nighttime) - Using Astronomy API */}
       {!isDaytime && (
         <div 
           className="relative z-20"
@@ -79,18 +89,33 @@ function CelestialBody({ isDaytime, moonPhase = 0.5, showClouds }: CelestialBody
             animation: 'float-moon 15s ease-in-out infinite', // Removed moon-glow, slower float (was 10s)
           }}
         >
-          <div 
-            className="w-48 h-48 rounded-full shadow-2xl relative overflow-hidden"
-            style={{
-              background: moonStyle.background,
-              boxShadow: moonStyle.shadow,
-            }}
-          >
-            {/* Simplified moon craters - reduced from 5 to 3 */}
-            <div className="absolute top-8 left-12 w-8 h-8 rounded-full bg-slate-700/30" />
-            <div className="absolute top-24 left-8 w-10 h-10 rounded-full bg-slate-700/20" />
-            <div className="absolute top-20 left-20 w-12 h-12 rounded-full bg-slate-700/15" />
-          </div>
+          {moonPhaseImage && !moonLoading ? (
+            // Display moon phase image from Astronomy API
+            <div className="w-48 h-48 relative">
+              <img 
+                src={moonPhaseImage}
+                alt="Current Moon Phase"
+                className="w-full h-full object-contain"
+                style={{
+                  filter: 'drop-shadow(0 25px 25px rgba(0, 0, 0, 0.5))'
+                }}
+              />
+            </div>
+          ) : (
+            // Fallback to gradient-based moon if API is unavailable or loading
+            <div 
+              className="w-48 h-48 rounded-full shadow-2xl relative overflow-hidden"
+              style={{
+                background: moonStyle.background,
+                boxShadow: moonStyle.shadow,
+              }}
+            >
+              {/* Simplified moon craters - reduced from 5 to 3 */}
+              <div className="absolute top-8 left-12 w-8 h-8 rounded-full bg-slate-700/30" />
+              <div className="absolute top-24 left-8 w-10 h-10 rounded-full bg-slate-700/20" />
+              <div className="absolute top-20 left-20 w-12 h-12 rounded-full bg-slate-700/15" />
+            </div>
+          )}
         </div>
       )}
 
