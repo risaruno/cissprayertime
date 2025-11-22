@@ -541,7 +541,7 @@ function App() {
       </div>
 
       {/* Main Content Grid - Time/Weather Left, Hadith Right */}
-      <div className="relative z-10 flex-1 px-8 max-w-[1920px] mx-auto w-full flex items-start justify-center py-12">
+      <div className="relative z-10 flex-1 px-8 max-w-[1920px] mx-auto w-full flex items-start justify-center py-4">
         <div className="grid grid-cols-2 gap-8 h-full">
         {/* Left Side - Time and Weather - SMALLER */}
         <div className="flex flex-col gap-1">

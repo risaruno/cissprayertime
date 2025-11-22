@@ -55,7 +55,7 @@ function CelestialBody({ isDaytime, moonPhase = 0.5, showClouds }: CelestialBody
   const cloudOpacityMultiplier = showClouds ? 1 : 0.3; // Lighter clouds when not cloudy
 
   return (
-    <div className="relative h-[200px] flex items-center justify-center">
+    <div className="relative h-[100px] flex items-center justify-center">
       {/* Sun (Daytime) - Reduced animations for performance */}
       {isDaytime && (
         <div 
