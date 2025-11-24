@@ -1,5 +1,16 @@
 import { useEffect, useState, useMemo } from 'react';
 
+// Constants for weather effects positioning and animation
+const CLOUD_POSITION_VARIANCE = 5; // pixels of random variance for cloud positions
+const CLOUD_VARIANCE_OFFSET = 2.5; // center offset for variance calculation
+const CLOUD_ANIMATION_VARIANTS = 3; // number of different cloud drift animations
+const CLOUD_SLOW_MULTIPLIER = 1.5; // speed multiplier when not cloudy
+const PRECIPITATION_START_POSITION = '120px'; // top position where rain/snow starts (below clouds)
+
+// Rain and snow particle counts
+const RAIN_DROP_COUNT = 100;
+const SNOWFLAKE_COUNT = 80;
+
 interface WeatherEffectsProps {
   showClouds: boolean;
   weatherCondition?: string; // 'Rain', 'Snow', 'Thunderstorm', 'Drizzle', etc.
@@ -25,7 +36,7 @@ function WeatherEffects({ showClouds, weatherCondition }: WeatherEffectsProps) {
     // Randomize cloud positions slightly on mount for variety
     setCloudPositions(prev => prev.map(cloud => ({
       ...cloud,
-      top: cloud.top + Math.random() * 5 - 2.5,
+      top: cloud.top + Math.random() * CLOUD_POSITION_VARIANCE - CLOUD_VARIANCE_OFFSET,
     })));
   }, []);
 
@@ -37,28 +48,30 @@ function WeatherEffects({ showClouds, weatherCondition }: WeatherEffectsProps) {
   const showRain = weatherCondition === 'Rain' || weatherCondition === 'Drizzle' || weatherCondition === 'Thunderstorm';
   const showSnow = weatherCondition === 'Snow';
 
-  // Generate rain drops or snowflakes
+  // Generate rain drops with useMemo to avoid recalculating on every render
+  // Using a seeded approach for more consistent results
   const rainDrops = useMemo(() => {
     if (!showRain) return [];
-    return Array.from({ length: 100 }, (_, i) => ({
+    return Array.from({ length: RAIN_DROP_COUNT }, (_, i) => ({
       id: i,
-      left: Math.random() * 100,
-      delay: Math.random() * 2,
-      duration: 0.5 + Math.random() * 0.5,
-      opacity: 0.3 + Math.random() * 0.4,
+      left: (i * 7.3 + 13) % 100, // Deterministic spread pattern
+      delay: (i * 0.02) % 2,
+      duration: 0.5 + (i % 5) * 0.1,
+      opacity: 0.3 + (i % 4) * 0.1,
     }));
   }, [showRain]);
 
+  // Generate snowflakes with useMemo for consistent results
   const snowflakes = useMemo(() => {
     if (!showSnow) return [];
-    return Array.from({ length: 80 }, (_, i) => ({
+    return Array.from({ length: SNOWFLAKE_COUNT }, (_, i) => ({
       id: i,
-      left: Math.random() * 100,
-      delay: Math.random() * 5,
-      duration: 3 + Math.random() * 4,
-      size: 3 + Math.random() * 5,
-      opacity: 0.5 + Math.random() * 0.5,
-      sway: Math.random() * 30 - 15,
+      left: (i * 8.7 + 5) % 100, // Deterministic spread pattern
+      delay: (i * 0.0625) % 5,
+      duration: 3 + (i % 4),
+      size: 3 + (i % 5),
+      opacity: 0.5 + (i % 5) * 0.1,
+      sway: ((i % 6) - 3) * 10, // Range from -30 to 20
     }));
   }, [showSnow]);
 
@@ -72,7 +85,7 @@ function WeatherEffects({ showClouds, weatherCondition }: WeatherEffectsProps) {
             className="absolute will-change-transform"
             style={{
               top: `${cloud.top}%`,
-              animation: `cloud-drift-${(index % 3) + 1} ${showClouds ? cloud.duration : cloud.duration * 1.5}s linear infinite`,
+              animation: `cloud-drift-${(index % CLOUD_ANIMATION_VARIANTS) + 1} ${showClouds ? cloud.duration : cloud.duration * CLOUD_SLOW_MULTIPLIER}s linear infinite`,
               animationDelay: `${cloud.delay}s`,
               transform: `scale(${cloud.size * 2})`,
               opacity: cloud.opacity * cloudOpacityMultiplier,
@@ -93,7 +106,10 @@ function WeatherEffects({ showClouds, weatherCondition }: WeatherEffectsProps) {
 
       {/* Rain effect - positioned below clouds */}
       {showRain && (
-        <div className="fixed top-[120px] left-0 right-0 bottom-0 pointer-events-none z-[4] overflow-hidden">
+        <div 
+          className="fixed left-0 right-0 bottom-0 pointer-events-none z-[4] overflow-hidden"
+          style={{ top: PRECIPITATION_START_POSITION }}
+        >
           {rainDrops.map((drop) => (
             <div
               key={drop.id}
@@ -111,7 +127,10 @@ function WeatherEffects({ showClouds, weatherCondition }: WeatherEffectsProps) {
 
       {/* Snow effect - positioned below clouds */}
       {showSnow && (
-        <div className="fixed top-[120px] left-0 right-0 bottom-0 pointer-events-none z-[4] overflow-hidden">
+        <div 
+          className="fixed left-0 right-0 bottom-0 pointer-events-none z-[4] overflow-hidden"
+          style={{ top: PRECIPITATION_START_POSITION }}
+        >
           {snowflakes.map((flake) => (
             <div
               key={flake.id}
