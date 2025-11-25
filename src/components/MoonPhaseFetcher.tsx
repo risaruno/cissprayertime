@@ -53,8 +53,8 @@ export const useMoonPhase = (latitude: number, longitude: number) => {
               moonStyle: 'default',
               backgroundStyle: 'solid',
               backgroundColor: 'transparent',
-              headingColor: 'white',
-              textColor: 'white'
+              headingColor: 'transparent',
+              textColor: 'transparent'
             },
             observer: {
               latitude,
@@ -62,7 +62,7 @@ export const useMoonPhase = (latitude: number, longitude: number) => {
               date: dateString
             },
             view: {
-              type: 'portrait-simple',
+              type: 'landscape-simple',
               orientation: 'south-up'
             }
           })

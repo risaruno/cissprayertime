@@ -3,6 +3,7 @@ import { MapPin } from 'lucide-react';
 import Glass from './components/Glass';
 import CelestialBody from './components/CelestialBody';
 import PerformanceMonitor from './components/PerformanceMonitor';
+import WeatherEffects from './components/WeatherEffects';
 
 // Import background images
 import AfterAsr from './assets/bg/After Asr.png';
@@ -507,6 +508,12 @@ function App() {
       {/* Overlay gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/40" />
 
+      {/* Weather Effects (Clouds, Rain, Snow) - positioned in upper section behind header */}
+      <WeatherEffects 
+        showClouds={shouldShowClouds()}
+        weatherCondition={weather?.main}
+      />
+
       {/* Mosque Header - Top Center with Logos - BIGGER */}
       <div className="relative z-10 py-10 px-8">
         <div className="flex items-center justify-center gap-12">
@@ -592,12 +599,11 @@ function App() {
           )}
         </div>
 
-        {/* Right Side - Celestial Body (Sun/Moon with Clouds) */}
+        {/* Right Side - Celestial Body (Sun/Moon) */}
         <div className="flex items-center justify-end">
           <CelestialBody 
             isDaytime={isDaytime()}
             moonPhase={weather?.moonPhase}
-            showClouds={shouldShowClouds()}
             latitude={weather?.latitude}
             longitude={weather?.longitude}
           />
