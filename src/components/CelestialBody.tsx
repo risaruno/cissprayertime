@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { useMoonPhase } from './MoonPhaseFetcher';
 
 // Default location: Seoul, South Korea
@@ -8,7 +7,6 @@ const DEFAULT_LONGITUDE = 126.9780;
 interface CelestialBodyProps {
   isDaytime: boolean;
   moonPhase?: number; // 0-1, where 0/1 = new moon, 0.5 = full moon (fallback)
-  showClouds: boolean;
   latitude?: number;
   longitude?: number;
 }
@@ -39,30 +37,11 @@ const getMoonPhaseStyle = (phase: number) => {
   }
 };
 
-function CelestialBody({ isDaytime, moonPhase = 0.5, showClouds, latitude = DEFAULT_LATITUDE, longitude = DEFAULT_LONGITUDE }: CelestialBodyProps) {
-  const [cloudPositions, setCloudPositions] = useState([
-    { top: 10, duration: 70, delay: 0, size: 1.3, opacity: 0.9 },
-    { top: 30, duration: 85, delay: 8, size: 1.1, opacity: 0.85 },
-    { top: 50, duration: 80, delay: 20, size: 1.2, opacity: 0.88 },
-    { top: 20, duration: 90, delay: 35, size: 1.0, opacity: 0.82 },
-  ]);
-
+function CelestialBody({ isDaytime, moonPhase = 0.5, latitude = DEFAULT_LATITUDE, longitude = DEFAULT_LONGITUDE }: CelestialBodyProps) {
   // Fetch moon phase image from Astronomy API
   const { moonPhaseImage, loading: moonLoading } = useMoonPhase(latitude, longitude);
 
-  useEffect(() => {
-    // Randomize cloud positions slightly on mount for variety
-    setCloudPositions(prev => prev.map(cloud => ({
-      ...cloud,
-      top: cloud.top + Math.random() * 10 - 5,
-    })));
-  }, []);
-
   const moonStyle = getMoonPhaseStyle(moonPhase);
-
-  // Determine how many clouds to show and their opacity
-  const cloudsToShow = showClouds ? cloudPositions : cloudPositions.slice(0, 1); // Show 4 clouds when cloudy, 1 when not
-  const cloudOpacityMultiplier = showClouds ? 1 : 0.3; // Lighter clouds when not cloudy
 
   return (
     <div className="relative h-[100px] flex items-center justify-center">
@@ -118,36 +97,6 @@ function CelestialBody({ isDaytime, moonPhase = 0.5, showClouds, latitude = DEFA
           )}
         </div>
       )}
-
-      {/* Clouds - Reduced count and slower animation */}
-      <div className="absolute inset-0 pointer-events-none z-10">
-        {cloudsToShow.map((cloud, index) => (
-          <div
-            key={index}
-            className="absolute will-change-transform" // GPU acceleration hint
-            style={{
-              top: `${cloud.top}%`,
-              animation: `cloud-drift-${(index % 3) + 1} ${showClouds ? cloud.duration : cloud.duration * 1.5}s linear infinite`, // Faster when cloudy
-              animationDelay: `${cloud.delay}s`,
-              transform: `scale(${cloud.size * 2})`,
-              opacity: cloud.opacity * cloudOpacityMultiplier,
-            }}
-          >
-            {/* Simplified cloud SVG - removed filter for better performance */}
-            <svg width="280" height="112" viewBox="0 0 280 112" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <g>
-                {/* Simplified cloud shape - fewer ellipses */}
-                <ellipse cx="70" cy="70" rx="49" ry="35" fill="white" opacity="0.85" />
-                <ellipse cx="112" cy="63" rx="56" ry="39" fill="white" opacity="0.9" />
-                <ellipse cx="154" cy="70" rx="53" ry="36" fill="white" opacity="0.85" />
-                
-                {/* Bottom fill */}
-                <rect x="42" y="63" width="175" height="28" fill="white" opacity="0.85" />
-              </g>
-            </svg>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
