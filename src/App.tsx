@@ -95,31 +95,38 @@ function App() {
   const [countdown, setCountdown] = useState<string>('');
   const [lastFetchDate, setLastFetchDate] = useState<string>('');
   
-  // Debug: Override time for testing (set to null to use real time)
-  const [debugTime, setDebugTime] = useState<Date | null>(null);
+  // Debug: Override time for testing using offset from real time
+  const [debugTimeOffset, setDebugTimeOffset] = useState<number>(0); // Offset in milliseconds from real time (0 = real time)
   const [showDebugPanel, setShowDebugPanel] = useState(false);
+  const [showIqamahPanel, setShowIqamahPanel] = useState(false);
   
   // Iqamah times (minutes after adhan)
   const [iqamahTimes, setIqamahTimes] = useState<{ [key: string]: number }>({
-    'Fajr': 20,
-    'Dhuhr': 10,
-    'Asr': 10,
-    'Maghrib': 5,
-    'Isha': 10
+    'Fajr': 30,
+    'Dhuhr': 30,
+    'Asr': 30,
+    'Maghrib': 15,
+    'Isha': 15
   });
   const [iqamahCountdown, setIqamahCountdown] = useState<string>('');
-  const [iqamahTooltipDelay, setIqamahTooltipDelay] = useState<number>(15); // minutes after adhan to show iqamah tooltip
-  const [showIqamahTooltip, setShowIqamahTooltip] = useState<boolean>(false);
+  const [iqamahTooltipDelay, setIqamahTooltipDelay] = useState<number>(0); // minutes after adhan to show iqamah tooltip (0 = immediately after adhan)
+  const [currentIqamahPrayer, setCurrentIqamahPrayer] = useState<string | null>(null); // Track which prayer is in iqamah period
   
   // format current time - Update less frequently to save resources
   const [currentTime, setCurrentTime] = useState(new Date());
   
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentTime(debugTime || new Date());
+      if (debugTimeOffset !== 0) {
+        // If debug offset is set, add it to current real time
+        setCurrentTime(new Date(Date.now() + debugTimeOffset));
+      } else {
+        // Use real time
+        setCurrentTime(new Date());
+      }
     }, 1000); // Keep at 1s for smooth clock
     return () => clearInterval(timer);
-  }, [debugTime]);
+  }, [debugTimeOffset]);
   
 
   // Fetch weather data
@@ -329,64 +336,69 @@ function App() {
 
   // Update countdown based on currentTime (syncs with both debug and real time)
   useEffect(() => {
-    if (nextPrayer) {
-      const now = currentTime;
-      const timeLeft = nextPrayer.time.getTime() - now.getTime();
-      const timeSinceAdhan = now.getTime() - nextPrayer.time.getTime();
+    if (!prayerTimes) {
+      setCountdown('');
+      setIqamahCountdown('');
+      setCurrentIqamahPrayer(null);
+      return;
+    }
+
+    const now = currentTime;
+    
+    // Check all prayers to see if we're in an iqamah period
+    const prayers = Object.entries(prayerTimes).filter(([name]) => name !== 'Sunrise');
+    let inIqamahPeriod = false;
+    
+    for (const [prayerName, prayerTimeStr] of prayers) {
+      const [hours, minutes] = prayerTimeStr.split(':');
+      const prayerTime = new Date();
+      prayerTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      
+      const timeSinceAdhan = now.getTime() - prayerTime.getTime();
       const minutesSinceAdhan = timeSinceAdhan / 60000;
       
-      // Show adhan tooltip before prayer time
-      if (timeLeft > 0) {
-        const hours = Math.floor(timeLeft / 3600000);
-        const minutes = Math.floor((timeLeft % 3600000) / 60000);
-        const seconds = Math.floor((timeLeft % 60000) / 1000);
-        setCountdown(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
-        setShowIqamahTooltip(false);
+      // Calculate iqamah time for this prayer
+      const iqamahMinutes = iqamahTimes[prayerName] || 0;
+      const iqamahTime = new Date(prayerTime.getTime() + iqamahMinutes * 60 * 1000);
+      const iqamahTimeLeft = iqamahTime.getTime() - now.getTime();
+      
+      // Check if we're in the iqamah period for this prayer
+      if (timeSinceAdhan >= 0 && iqamahTimeLeft > 0 && minutesSinceAdhan >= iqamahTooltipDelay) {
+        inIqamahPeriod = true;
         
-        // Calculate iqamah time for display in adhan tooltip
-        if (nextPrayer.name !== 'Sunrise' && iqamahTimes[nextPrayer.name]) {
-          const iqamahTime = new Date(nextPrayer.time.getTime() + iqamahTimes[nextPrayer.name] * 60 * 1000);
-          const iqamahTimeLeft = iqamahTime.getTime() - now.getTime();
-          
-          if (iqamahTimeLeft > 0) {
-            const iqHours = Math.floor(iqamahTimeLeft / 3600000);
-            const iqMinutes = Math.floor((iqamahTimeLeft % 3600000) / 60000);
-            const iqSeconds = Math.floor((iqamahTimeLeft % 60000) / 1000);
-            setIqamahCountdown(`${iqHours.toString().padStart(2, '0')}:${iqMinutes.toString().padStart(2, '0')}:${iqSeconds.toString().padStart(2, '0')}`);
-          } else {
-            setIqamahCountdown('');
-          }
-        } else {
-          setIqamahCountdown('');
-        }
-      } 
-      // Show iqamah tooltip after iqamahTooltipDelay minutes past adhan
-      else if (minutesSinceAdhan >= iqamahTooltipDelay && nextPrayer.name !== 'Sunrise' && iqamahTimes[nextPrayer.name]) {
-        setCountdown('');
-        const iqamahTime = new Date(nextPrayer.time.getTime() + iqamahTimes[nextPrayer.name] * 60 * 1000);
-        const iqamahTimeLeft = iqamahTime.getTime() - now.getTime();
+        // Calculate and set iqamah countdown
+        const iqHours = Math.floor(iqamahTimeLeft / 3600000);
+        const iqMinutes = Math.floor((iqamahTimeLeft % 3600000) / 60000);
+        const iqSeconds = Math.floor((iqamahTimeLeft % 60000) / 1000);
+        setIqamahCountdown(`${iqHours.toString().padStart(2, '0')}:${iqMinutes.toString().padStart(2, '0')}:${iqSeconds.toString().padStart(2, '0')}`);
+        setCurrentIqamahPrayer(prayerName);
+        setCountdown(''); // Don't show adhan countdown during iqamah period
+        break;
+      }
+    }
+    
+    // If not in iqamah period, show countdown to next prayer
+    if (!inIqamahPeriod) {
+      setIqamahCountdown('');
+      setCurrentIqamahPrayer(null);
+      
+      // Show countdown to next prayer
+      if (nextPrayer) {
+        const timeLeft = nextPrayer.time.getTime() - now.getTime();
         
-        if (iqamahTimeLeft > 0) {
-          const iqHours = Math.floor(iqamahTimeLeft / 3600000);
-          const iqMinutes = Math.floor((iqamahTimeLeft % 3600000) / 60000);
-          const iqSeconds = Math.floor((iqamahTimeLeft % 60000) / 1000);
-          setIqamahCountdown(`${iqHours.toString().padStart(2, '0')}:${iqMinutes.toString().padStart(2, '0')}:${iqSeconds.toString().padStart(2, '0')}`);
-          setShowIqamahTooltip(true);
+        if (timeLeft > 0) {
+          const hours = Math.floor(timeLeft / 3600000);
+          const minutes = Math.floor((timeLeft % 3600000) / 60000);
+          const seconds = Math.floor((timeLeft % 60000) / 1000);
+          setCountdown(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
         } else {
-          setIqamahCountdown('');
-          setShowIqamahTooltip(false);
+          setCountdown('');
         }
       } else {
         setCountdown('');
-        setIqamahCountdown('');
-        setShowIqamahTooltip(false);
       }
-    } else {
-      setCountdown('');
-      setIqamahCountdown('');
-      setShowIqamahTooltip(false);
     }
-  }, [nextPrayer, iqamahTimes, iqamahTooltipDelay, currentTime]);
+  }, [nextPrayer, iqamahTimes, iqamahTooltipDelay, currentTime, prayerTimes]);
 
   // Auto-refresh prayer times daily at midnight for Smart TVs
   useEffect(() => {
@@ -622,8 +634,8 @@ function App() {
                 
                 return (
                   <div key={prayer} className="relative">
-                    {/* Adhan Countdown Tooltip - Green */}
-                    {isActive && countdown && (
+                    {/* Adhan Countdown Tooltip - Green (only show when NOT in iqamah period) */}
+                    {isActive && countdown && !currentIqamahPrayer && (
                       <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 z-50">
                         <div className="bg-gradient-to-br from-green-500/95 to-green-600/95 backdrop-blur-md rounded-lg px-6 py-3 shadow-xl border-2 border-green-400">
                           <div className="text-center space-y-2">
@@ -639,8 +651,8 @@ function App() {
                       </div>
                     )}
                     
-                    {/* Iqamah Countdown Tooltip - Orange (appears after delay) */}
-                    {isActive && showIqamahTooltip && iqamahCountdown && !isSyuruq && (
+                    {/* Iqamah Countdown Tooltip - Orange (appears for prayer in iqamah period) */}
+                    {currentIqamahPrayer === prayer && iqamahCountdown && !isSyuruq && (
                       <div className="absolute -top-20 left-1/2 transform -translate-x-1/2 z-50">
                         <div className="bg-gradient-to-br from-orange-500/95 to-orange-600/95 backdrop-blur-md rounded-lg px-6 py-3 shadow-xl border-2 border-orange-400">
                           <div className="text-center">
@@ -793,32 +805,39 @@ function App() {
                   <div className="text-xs text-white/70">
                     {formatDate(currentTime)}
                   </div>
+                  {debugTimeOffset !== 0 && (
+                    <div className="text-xs text-green-400 mt-1">
+                      ✓ Debug mode active (offset: {Math.round(debugTimeOffset / 60000)} min)
+                    </div>
+                  )}
                 </div>
 
                 {/* Time Input */}
                 <div>
-                  <label className="text-xs text-white/70 block mb-1">Set Debug Time:</label>
+                  <label className="text-xs text-white/70 block mb-1">Set Debug Time (continues counting):</label>
                   <input
                     type="time"
                     className="w-full bg-gray-800 text-white px-3 py-2 rounded border border-purple-500/50 focus:border-purple-400 focus:outline-none"
                     onChange={(e) => {
                       if (e.target.value) {
                         const [hours, minutes] = e.target.value.split(':');
-                        const newTime = new Date();
-                        newTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-                        setDebugTime(newTime);
+                        const targetTime = new Date();
+                        targetTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+                        const offset = targetTime.getTime() - Date.now();
+                        setDebugTimeOffset(offset);
                       }
                     }}
                   />
+                  <div className="text-xs text-white/50 mt-1">Clock will continue running from set time</div>
                 </div>
 
                 {/* Quick Time Buttons */}
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => {
-                      const time = new Date();
-                      time.setHours(5, 0, 0, 0); // Fajr
-                      setDebugTime(time);
+                      const targetTime = new Date();
+                      targetTime.setHours(5, 0, 0, 0);
+                      setDebugTimeOffset(targetTime.getTime() - Date.now());
                     }}
                     className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded text-xs transition-colors"
                   >
@@ -826,9 +845,9 @@ function App() {
                   </button>
                   <button
                     onClick={() => {
-                      const time = new Date();
-                      time.setHours(12, 30, 0, 0); // Dhuhr
-                      setDebugTime(time);
+                      const targetTime = new Date();
+                      targetTime.setHours(12, 30, 0, 0);
+                      setDebugTimeOffset(targetTime.getTime() - Date.now());
                     }}
                     className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded text-xs transition-colors"
                   >
@@ -836,9 +855,9 @@ function App() {
                   </button>
                   <button
                     onClick={() => {
-                      const time = new Date();
-                      time.setHours(15, 30, 0, 0); // Asr
-                      setDebugTime(time);
+                      const targetTime = new Date();
+                      targetTime.setHours(15, 30, 0, 0);
+                      setDebugTimeOffset(targetTime.getTime() - Date.now());
                     }}
                     className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded text-xs transition-colors"
                   >
@@ -846,9 +865,9 @@ function App() {
                   </button>
                   <button
                     onClick={() => {
-                      const time = new Date();
-                      time.setHours(18, 0, 0, 0); // Maghrib
-                      setDebugTime(time);
+                      const targetTime = new Date();
+                      targetTime.setHours(18, 0, 0, 0);
+                      setDebugTimeOffset(targetTime.getTime() - Date.now());
                     }}
                     className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded text-xs transition-colors"
                   >
@@ -858,50 +877,107 @@ function App() {
 
                 {/* Reset Button */}
                 <button
-                  onClick={() => setDebugTime(null)}
+                  onClick={() => setDebugTimeOffset(0)}
                   className="w-full bg-red-600/80 hover:bg-red-700/80 px-3 py-2 rounded text-sm transition-colors font-semibold"
                 >
                   ↻ Reset to Real Time
                 </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
-                {debugTime && (
-                  <div className="text-xs text-green-400 text-center">
-                    ✓ Debug mode active
-                  </div>
-                )}
+      {/* Iqamah Time Settings Panel - Separate from Debug Panel */}
+      {DEBUG_MODE && (
+        <div className="fixed top-4 right-4 z-50" style={{ marginTop: showDebugPanel ? '520px' : '60px' }}>
+          {!showIqamahPanel ? (
+            <button
+              onClick={() => setShowIqamahPanel(true)}
+              className="bg-orange-600/90 hover:bg-orange-700/90 text-white px-4 py-2 rounded-lg shadow-xl font-mono text-sm backdrop-blur-sm transition-colors"
+            >
+              ⏱️ Iqamah Settings
+            </button>
+          ) : (
+            <div className="bg-black/90 backdrop-blur-sm text-white p-4 rounded-lg shadow-2xl border border-orange-500/50 font-mono text-sm min-w-[320px]">
+              <div className="flex items-center justify-between mb-3 border-b border-white/20 pb-2">
+                <h3 className="font-bold text-orange-400">⏱️ Iqamah Time Control</h3>
+                <button
+                  onClick={() => setShowIqamahPanel(false)}
+                  className="text-white/60 hover:text-white transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="bg-orange-900/30 p-2 rounded border border-orange-500/30 mb-3">
+                  <p className="text-xs text-orange-200">Configure when iqamah starts after each adhan time</p>
+                </div>
 
-                {/* Iqamah Time Settings */}
-                <div className="border-t border-white/20 pt-3 mt-2">
-                  <h4 className="text-xs text-orange-300 font-bold mb-2">⏱️ Iqamah Times (minutes after adhan)</h4>
-                  <div className="space-y-2">
-                    {['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].map((prayer) => (
-                      <div key={prayer} className="flex items-center justify-between">
-                        <label className="text-xs text-white/70 w-20">{prayer}:</label>
+                <h4 className="text-xs text-orange-300 font-bold mb-2">Minutes After Adhan:</h4>
+                <div className="space-y-2">
+                  {['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].map((prayer) => (
+                    <div key={prayer} className="flex items-center justify-between bg-gray-800/50 p-2 rounded">
+                      <label className="text-sm text-white font-semibold w-24">{prayer}:</label>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setIqamahTimes({ ...iqamahTimes, [prayer]: Math.max(0, iqamahTimes[prayer] - 1) })}
+                          className="bg-orange-700 hover:bg-orange-800 px-2 py-1 rounded text-xs transition-colors"
+                        >
+                          -
+                        </button>
                         <input
                           type="number"
                           min="0"
-                          max="30"
+                          max="60"
                           value={iqamahTimes[prayer]}
                           onChange={(e) => setIqamahTimes({ ...iqamahTimes, [prayer]: parseInt(e.target.value) || 0 })}
                           className="w-16 bg-gray-800 text-white px-2 py-1 rounded border border-orange-500/50 focus:border-orange-400 focus:outline-none text-center text-sm"
                         />
-                        <span className="text-xs text-white/50 ml-1">min</span>
-                      </div>
-                    ))}
-                    <div className="border-t border-orange-500/20 pt-2 mt-2">
-                      <label className="text-xs text-orange-200 block mb-1">Show Iqamah Tooltip After:</label>
-                      <div className="flex items-center justify-between">
-                        <input
-                          type="number"
-                          min="0"
-                          max="30"
-                          value={iqamahTooltipDelay}
-                          onChange={(e) => setIqamahTooltipDelay(parseInt(e.target.value) || 0)}
-                          className="w-16 bg-gray-800 text-white px-2 py-1 rounded border border-orange-500/50 focus:border-orange-400 focus:outline-none text-center text-sm"
-                        />
-                        <span className="text-xs text-white/50 ml-1">min past adhan</span>
+                        <button
+                          onClick={() => setIqamahTimes({ ...iqamahTimes, [prayer]: Math.min(60, iqamahTimes[prayer] + 1) })}
+                          className="bg-orange-700 hover:bg-orange-800 px-2 py-1 rounded text-xs transition-colors"
+                        >
+                          +
+                        </button>
+                        <span className="text-xs text-white/70 ml-1 w-8">min</span>
                       </div>
                     </div>
+                  ))}
+                </div>
+
+                <div className="border-t border-orange-500/20 pt-3 mt-3">
+                  <label className="text-xs text-orange-200 block mb-2">
+                    <strong>Show Iqamah Tooltip After:</strong>
+                    <br />
+                    <span className="text-white/60">(minutes after adhan to display orange countdown)</span>
+                  </label>
+                  <div className="flex items-center justify-between bg-gray-800/50 p-2 rounded">
+                    <button
+                      onClick={() => setIqamahTooltipDelay(Math.max(0, iqamahTooltipDelay - 1))}
+                      className="bg-orange-700 hover:bg-orange-800 px-3 py-1 rounded text-sm transition-colors"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="0"
+                      max="30"
+                      value={iqamahTooltipDelay}
+                      onChange={(e) => setIqamahTooltipDelay(parseInt(e.target.value) || 0)}
+                      className="w-20 bg-gray-800 text-white px-2 py-1 rounded border border-orange-500/50 focus:border-orange-400 focus:outline-none text-center text-sm"
+                    />
+                    <button
+                      onClick={() => setIqamahTooltipDelay(Math.min(30, iqamahTooltipDelay + 1))}
+                      className="bg-orange-700 hover:bg-orange-800 px-3 py-1 rounded text-sm transition-colors"
+                    >
+                      +
+                    </button>
+                    <span className="text-xs text-white/70 ml-2">min</span>
+                  </div>
+                  <div className="text-xs text-orange-300/70 mt-2 p-2 bg-orange-900/20 rounded">
+                    💡 Set to 0 to show immediately after adhan
                   </div>
                 </div>
               </div>
