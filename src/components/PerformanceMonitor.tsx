@@ -57,15 +57,15 @@ function PerformanceMonitor() {
         });
 
         // Console log for debugging
-        console.log('=== Performance Metrics ===');
-        console.log(`FPS: ${fps}`);
-        if (memory) {
-          console.log(`Memory Used: ${memory.used} MB / ${memory.total} MB (Limit: ${memory.limit} MB)`);
-          console.log(`Memory Usage: ${Math.round((memory.used / memory.limit) * 100)}%`);
-        }
-        console.log(`DOM Nodes: ${domNodes}`);
-        console.log(`Initial Render Time: ${renderTime}ms`);
-        console.log('========================\n');
+        // console.log('=== Performance Metrics ===');
+        // console.log(`FPS: ${fps}`);
+        // if (memory) {
+        //   console.log(`Memory Used: ${memory.used} MB / ${memory.total} MB (Limit: ${memory.limit} MB)`);
+        //   console.log(`Memory Usage: ${Math.round((memory.used / memory.limit) * 100)}%`);
+        // }
+        // console.log(`DOM Nodes: ${domNodes}`);
+        // console.log(`Initial Render Time: ${renderTime}ms`);
+        // console.log('========================\n');
 
         frameCount = 0;
         lastTime = currentTime;
