@@ -88,7 +88,8 @@ function App() {
   const [location, setLocation] = useState('Seoul');
   const [loading, setLoading] = useState(false);
   const [prayerTimes, setPrayerTimes] = useState<PrayerTimes | null>(null);
-  const [nextPrayer, setNextPrayer] = useState<{ name: string; time: Date } | null>(null);
+  const [currentPrayer, setCurrentPrayer] = useState<{ name: string; time: Date } | null>(null); // The prayer period we're currently in
+  const [nextPrayer, setNextPrayer] = useState<{ name: string; time: Date } | null>(null); // The upcoming prayer
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [backgroundImage, setBackgroundImage] = useState(Syurk);
   const [calendar, setCalendar] = useState<CalendarData | null>(null);
@@ -100,9 +101,12 @@ function App() {
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [showIqamahPanel, setShowIqamahPanel] = useState(false);
   
+  // Debug: Weather effects override
+  const [debugWeatherEffect, setDebugWeatherEffect] = useState<string | null>(null); // 'Rain', 'Snow', or null for actual weather
+  
   // Iqamah times (minutes after adhan)
   const [iqamahTimes, setIqamahTimes] = useState<{ [key: string]: number }>({
-    'Fajr': 30,
+    'Fajr': 20,
     'Dhuhr': 30,
     'Asr': 30,
     'Maghrib': 15,
@@ -208,7 +212,7 @@ function App() {
     setLoading(false);
   }, []);
 
-  // Update next prayer
+  // Update current and next prayer
   const updateNextPrayer = (times: PrayerTimes, currentTimeParam?: Date) => {
     const now = currentTimeParam || new Date();
     // Exclude Sunrise from next prayer calculation (it's not a prayer time)
@@ -221,8 +225,15 @@ function App() {
     });
 
     todayPrayers.sort((a, b) => a.time.getTime() - b.time.getTime());
+    
+    // Find the next prayer (upcoming prayer that hasn't started yet)
     const next = todayPrayers.find(prayer => prayer.time > now);
     
+    // Find the current prayer (most recent prayer that has passed)
+    const passedPrayers = todayPrayers.filter(prayer => prayer.time <= now);
+    const current = passedPrayers.length > 0 ? passedPrayers[passedPrayers.length - 1] : null;
+    
+    // Set next prayer
     if (!next && todayPrayers.length > 0) {
       const tomorrowPrayer = {
         name: todayPrayers[0].name,
@@ -231,6 +242,19 @@ function App() {
       setNextPrayer(tomorrowPrayer);
     } else {
       setNextPrayer(next || null);
+    }
+    
+    // Set current prayer
+    if (current) {
+      setCurrentPrayer(current);
+    } else {
+      // If no prayer has passed today, we're before Fajr, so current prayer is Isha from yesterday
+      const lastPrayer = todayPrayers[todayPrayers.length - 1];
+      const yesterdayPrayer = {
+        name: lastPrayer.name,
+        time: new Date(lastPrayer.time.getTime() - 24 * 60 * 60 * 1000)
+      };
+      setCurrentPrayer(yesterdayPrayer);
     }
   };
 
@@ -523,7 +547,7 @@ function App() {
       {/* Weather Effects (Clouds, Rain, Snow) - positioned in upper section behind header */}
       <WeatherEffects 
         showClouds={shouldShowClouds()}
-        weatherCondition={weather?.main}
+        weatherCondition={debugWeatherEffect || weather?.main}
       />
 
       {/* Mosque Header - Top Center with Logos - BIGGER */}
@@ -546,10 +570,12 @@ function App() {
             <h2 className="text-3xl font-semibold text-white/90 drop-shadow-lg mb-2">
               Center of Islamic Studies Seoul
             </h2>
-            <div className="flex items-center justify-center gap-3 text-2xl text-white/90 drop-shadow-lg">
-              <MapPin className="w-6 h-6" />
-              <p>서울특별시 영등포구 신길로 60다길21</p>
-            </div>
+            <span className="inline-flex items-center bg-gradient-to-r from-blue-500/40 to-blue-800/40 backdrop-blur-sm border-2 border-blue-400/60 rounded-full px-6 py-2 mx-4 shadow-lg">
+              <span className="text-2xl font-bold text-white/90 drop-shadow-md flex items-center justify-center gap-3">
+                <MapPin className="w-6 h-6" />
+                서울특별시 영등포구 신길로 60다길 21
+              </span>
+            </span>
           </div>
 
           {/* Right Logo */}
@@ -629,13 +655,14 @@ function App() {
           <div className="p-8 pb-4">
             <div className="grid grid-cols-6 gap-4 max-w-7xl mx-auto">
               {Object.entries(prayerTimes).map(([prayer, time]) => {
-                const isActive = nextPrayer?.name === prayer;
+                const isCurrentPrayer = currentPrayer?.name === prayer; // Green background - we're in this prayer period
+                const isNextPrayer = nextPrayer?.name === prayer; // Show countdown tooltip
                 const isSyuruq = prayer === 'Sunrise';
                 
                 return (
                   <div key={prayer} className="relative">
-                    {/* Adhan Countdown Tooltip - Green (only show when NOT in iqamah period) */}
-                    {isActive && countdown && !currentIqamahPrayer && (
+                    {/* Adhan Countdown Tooltip - Green (only show for next prayer when NOT in iqamah period) */}
+                    {isNextPrayer && countdown && !currentIqamahPrayer && (
                       <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 z-50">
                         <div className="bg-gradient-to-br from-green-500/95 to-green-600/95 backdrop-blur-md rounded-lg px-6 py-3 shadow-xl border-2 border-green-400">
                           <div className="text-center space-y-2">
@@ -653,12 +680,12 @@ function App() {
                     
                     {/* Iqamah Countdown Tooltip - Orange (appears for prayer in iqamah period) */}
                     {currentIqamahPrayer === prayer && iqamahCountdown && !isSyuruq && (
-                      <div className="absolute -top-20 left-1/2 transform -translate-x-1/2 z-50">
+                      <div className="absolute -top-24 left-1/2 transform -translate-x-1/2 z-50">
                         <div className="bg-gradient-to-br from-orange-500/95 to-orange-600/95 backdrop-blur-md rounded-lg px-6 py-3 shadow-xl border-2 border-orange-400">
                           <div className="text-center">
-                            <p className="text-xs text-white/90 font-semibold mb-1 whitespace-nowrap">⏱️ Time Until Iqamah</p>
-                            <p className="text-3xl font-bold text-white font-mono">{iqamahCountdown}</p>
-                            <p className="text-xs text-orange-100/90 mt-2">{iqamahTimes[prayer]} minutes after adhan</p>
+                            <p className="text-xs text-white/90 font-semibold mb-1 whitespace-nowrap">Time Until Iqamah</p>
+                            <p className="text-2xl font-bold text-white font-mono">{iqamahCountdown}</p>
+                            <p className="text-xs text-orange-100/90">{iqamahTimes[prayer]} minutes after adhan</p>
                           </div>
                           {/* Arrow pointing down */}
                           <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-orange-600/95"></div>
@@ -666,12 +693,12 @@ function App() {
                       </div>
                     )}
                     
-                    <Glass active={isActive}>
+                    <Glass active={isCurrentPrayer}>
                       <div className="p-6 flex flex-col items-center justify-center space-y-2">
-                        <h3 className={`text-2xl font-bold ${isActive ? 'text-green-100' : isSyuruq ? 'text-yellow-100' : 'text-white'} drop-shadow-lg`}>
+                        <h3 className={`text-2xl font-bold ${isCurrentPrayer ? 'text-green-100' : isSyuruq ? 'text-yellow-100' : 'text-white'} drop-shadow-lg`}>
                           {displayPrayerName(prayer)}
                         </h3>
-                        <p className={`text-3xl font-semibold ${isActive ? 'text-green-50' : isSyuruq ? 'text-yellow-50' : 'text-white/90'} drop-shadow-md font-mono`}>
+                        <p className={`text-3xl font-semibold ${isCurrentPrayer ? 'text-green-50' : isSyuruq ? 'text-yellow-50' : 'text-white/90'} drop-shadow-md font-mono`}>
                           {time}
                         </p>
                       </div>
@@ -692,12 +719,12 @@ function App() {
             <div className="liquidGlass-tint"></div>
             <div className="liquidGlass-shine"></div>
             <div className="liquidGlass-text w-full">
-              <div className="py-5 border-t border-white/10">
+              <div className="py-2 border-t border-white/10">
                 <div className="overflow-hidden relative">
-                  <div className="animate-scroll-infinite whitespace-nowrap flex items-center will-change-transform">
-                    {/* Create alternating pattern: quote -> bank -> quote -> bank */}
+                  <div className="animate-scroll-infinite whitespace-nowrap inline-flex items-center will-change-transform">
+                    {/* First set - Original */}
                     {QURAN_QUOTES.map((quote, index) => (
-                      <div key={`group-${index}`} className="inline-flex items-center">
+                      <div key={`original-${index}`} className="inline-flex items-center flex-shrink-0">
                         {/* Quran Quote */}
                         <span className="text-xl font-medium text-white drop-shadow-lg px-8">
                           {quote}
@@ -732,15 +759,21 @@ function App() {
                         </span>
                       </div>
                     ))}
-                    {/* Duplicate for seamless infinite loop */}
+                    
+                    {/* Second set - Duplicate for seamless loop */}
                     {QURAN_QUOTES.map((quote, index) => (
-                      <div key={`group-duplicate-${index}`} className="inline-flex items-center">
+                      <div key={`duplicate-${index}`} className="inline-flex items-center flex-shrink-0">
+                        {/* Quran Quote */}
                         <span className="text-xl font-medium text-white drop-shadow-lg px-8">
                           {quote}
                         </span>
+                        
+                        {/* Separator */}
                         <span className="text-2xl font-semibold text-white/60 drop-shadow-lg px-4">
                           •
                         </span>
+                        
+                        {/* Bank Account Chip - Yellowish Color */}
                         <span className="inline-flex items-center bg-gradient-to-r from-yellow-500/40 to-amber-600/40 backdrop-blur-sm border-2 border-yellow-400/60 rounded-full px-6 py-2 mx-4 shadow-lg">
                           <svg 
                             className="w-5 h-5 mr-2 text-yellow-100" 
@@ -757,6 +790,8 @@ function App() {
                             (서울이슬람교육센터)
                           </span>
                         </span>
+                        
+                        {/* Separator */}
                         <span className="text-2xl font-semibold text-white/60 drop-shadow-lg px-4">
                           •
                         </span>
@@ -882,6 +917,48 @@ function App() {
                 >
                   ↻ Reset to Real Time
                 </button>
+
+                {/* Weather Effects Control */}
+                <div className="border-t border-white/20 pt-3 mt-2">
+                  <label className="text-xs text-white/70 block mb-2">Weather Effects Override:</label>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => setDebugWeatherEffect(null)}
+                      className={`w-full px-3 py-2 rounded text-xs transition-colors ${
+                        debugWeatherEffect === null 
+                          ? 'bg-green-600 text-white' 
+                          : 'bg-gray-700 hover:bg-gray-600 text-white/70'
+                      }`}
+                    >
+                      {debugWeatherEffect === null ? '✓ ' : ''}Auto (Actual Weather)
+                    </button>
+                    <button
+                      onClick={() => setDebugWeatherEffect('Rain')}
+                      className={`w-full px-3 py-2 rounded text-xs transition-colors ${
+                        debugWeatherEffect === 'Rain' 
+                          ? 'bg-blue-600 text-white' 
+                          : 'bg-gray-700 hover:bg-gray-600 text-white/70'
+                      }`}
+                    >
+                      {debugWeatherEffect === 'Rain' ? '✓ ' : ''}🌧️ Force Rain
+                    </button>
+                    <button
+                      onClick={() => setDebugWeatherEffect('Snow')}
+                      className={`w-full px-3 py-2 rounded text-xs transition-colors ${
+                        debugWeatherEffect === 'Snow' 
+                          ? 'bg-cyan-600 text-white' 
+                          : 'bg-gray-700 hover:bg-gray-600 text-white/70'
+                      }`}
+                    >
+                      {debugWeatherEffect === 'Snow' ? '✓ ' : ''}❄️ Force Snow
+                    </button>
+                  </div>
+                  {debugWeatherEffect && (
+                    <div className="text-xs text-green-400 mt-2">
+                      ✓ Weather effect override active
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -890,7 +967,7 @@ function App() {
 
       {/* Iqamah Time Settings Panel - Separate from Debug Panel */}
       {DEBUG_MODE && (
-        <div className="fixed top-4 right-4 z-50" style={{ marginTop: showDebugPanel ? '520px' : '60px' }}>
+        <div className="fixed top-4 right-4 z-50" style={{ marginTop: showDebugPanel ? '680px' : '60px' }}>
           {!showIqamahPanel ? (
             <button
               onClick={() => setShowIqamahPanel(true)}
