@@ -15,7 +15,7 @@ export default {
         lg: '12px 8px 8px var(--tw-shadow-color)',
       },
       animation: {
-        'scroll-infinite': 'scroll-infinite 20s linear infinite', // Slower scroll (was 60s) for better performance
+        'scroll-infinite': 'scroll-infinite 180s linear infinite', // Slower scroll - increase number for slower speed
       },
       keyframes: {
         'scroll-infinite': {
