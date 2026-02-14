@@ -3,9 +3,9 @@ import { useMemo } from 'react';
 // Constants for weather effects positioning and animation
 const PRECIPITATION_START_POSITION = '0px'; // top position where rain/snow starts
 
-// Rain and snow particle counts
-const RAIN_DROP_COUNT = 100;
-const SNOWFLAKE_COUNT = 80;
+// Rain and snow particle counts - Optimized for low-end devices like Android TV
+const RAIN_DROP_COUNT = 40;
+const SNOWFLAKE_COUNT = 30;
 
 interface WeatherEffectsProps {
   weatherCondition?: string; // 'Rain', 'Snow', 'Thunderstorm', 'Drizzle', etc.
@@ -50,7 +50,11 @@ function WeatherEffects({ weatherCondition }: WeatherEffectsProps) {
       {showRain && (
         <div
           className="fixed left-0 right-0 bottom-0 pointer-events-none z-[4] overflow-hidden"
-          style={{ top: PRECIPITATION_START_POSITION }}
+          style={{ 
+            top: PRECIPITATION_START_POSITION,
+            contain: 'layout style paint',
+            willChange: 'transform'
+          }}
         >
           {rainDrops.map((drop) => (
             <div
@@ -61,6 +65,7 @@ function WeatherEffects({ weatherCondition }: WeatherEffectsProps) {
                 opacity: drop.opacity,
                 animation: `rain-fall ${drop.duration}s linear infinite`,
                 animationDelay: `${drop.delay}s`,
+                willChange: 'transform',
               }}
             />
           ))}
@@ -71,7 +76,11 @@ function WeatherEffects({ weatherCondition }: WeatherEffectsProps) {
       {showSnow && (
         <div
           className="fixed left-0 right-0 bottom-0 pointer-events-none z-[4] overflow-hidden"
-          style={{ top: PRECIPITATION_START_POSITION }}
+          style={{ 
+            top: PRECIPITATION_START_POSITION,
+            contain: 'layout style paint',
+            willChange: 'transform'
+          }}
         >
           {snowflakes.map((flake) => (
             <div
@@ -85,6 +94,7 @@ function WeatherEffects({ weatherCondition }: WeatherEffectsProps) {
                 animation: `snow-fall ${flake.duration}s linear infinite`,
                 animationDelay: `${flake.delay}s`,
                 '--sway': `${flake.sway}px`,
+                willChange: 'transform',
               } as React.CSSProperties}
             />
           ))}
