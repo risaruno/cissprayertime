@@ -56,17 +56,6 @@ function PerformanceMonitor() {
           domNodes,
         });
 
-        // Console log for debugging
-        // console.log('=== Performance Metrics ===');
-        // console.log(`FPS: ${fps}`);
-        // if (memory) {
-        //   console.log(`Memory Used: ${memory.used} MB / ${memory.total} MB (Limit: ${memory.limit} MB)`);
-        //   console.log(`Memory Usage: ${Math.round((memory.used / memory.limit) * 100)}%`);
-        // }
-        // console.log(`DOM Nodes: ${domNodes}`);
-        // console.log(`Initial Render Time: ${renderTime}ms`);
-        // console.log('========================\n');
-
         frameCount = 0;
         lastTime = currentTime;
       }
@@ -74,7 +63,10 @@ function PerformanceMonitor() {
       animationFrameId = requestAnimationFrame(measurePerformance);
     };
 
-    animationFrameId = requestAnimationFrame(measurePerformance);
+    // Only run performance monitoring when visible
+    if (isVisible) {
+      animationFrameId = requestAnimationFrame(measurePerformance);
+    }
 
     // Keyboard shortcut to toggle visibility (Ctrl/Cmd + Shift + P)
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -86,10 +78,12 @@ function PerformanceMonitor() {
     window.addEventListener('keydown', handleKeyPress);
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
       window.removeEventListener('keydown', handleKeyPress);
     };
-  }, []);
+  }, [isVisible]);
 
   if (!isVisible) {
     return (
@@ -122,7 +116,7 @@ function PerformanceMonitor() {
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
-      <div className="bg-black/90 backdrop-blur-sm text-white p-4 rounded-lg shadow-2xl border border-white/20 font-mono text-xs min-w-[280px]">
+      <div className="bg-black/90 backdrop-blur-[2px] text-white p-4 rounded-lg shadow-2xl border border-white/20 font-mono text-xs min-w-[280px]">
         <div className="flex items-center justify-between mb-3 border-b border-white/20 pb-2">
           <h3 className="text-sm font-bold text-cyan-400">Performance Monitor</h3>
           <button

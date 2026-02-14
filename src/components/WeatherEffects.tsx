@@ -3,9 +3,9 @@ import { useMemo } from 'react';
 // Constants for weather effects positioning and animation
 const PRECIPITATION_START_POSITION = '0px'; // top position where rain/snow starts
 
-// Rain and snow particle counts
-const RAIN_DROP_COUNT = 100;
-const SNOWFLAKE_COUNT = 80;
+// Rain and snow particle counts - Optimized for low-end devices like Android TV
+const RAIN_DROP_COUNT = 40;
+const SNOWFLAKE_COUNT = 30;
 
 interface WeatherEffectsProps {
   weatherCondition?: string; // 'Rain', 'Snow', 'Thunderstorm', 'Drizzle', etc.

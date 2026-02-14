@@ -55,23 +55,23 @@
   }
 }
 
-/* Sun animation - simplified, gentle floating only (no glow for performance) */
+/* Sun animation - simplified, gentle floating with GPU acceleration */
 @keyframes float-sun {
   0%, 100% {
-    transform: translateY(0px);
+    transform: translate3d(0, 0, 0);
   }
   50% {
-    transform: translateY(-15px);
+    transform: translate3d(0, -15px, 0);
   }
 }
 
-/* Moon animation - simplified, gentle floating only (no glow for performance) */
+/* Moon animation - simplified, gentle floating with GPU acceleration */
 @keyframes float-moon {
   0%, 100% {
-    transform: translateY(0px);
+    transform: translate3d(0, 0, 0);
   }
   50% {
-    transform: translateY(-10px);
+    transform: translate3d(0, -10px, 0);
   }
 }
 
@@ -103,16 +103,44 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Iqamah countdown pulse animation */
+/* GPU acceleration for animations */
+.animate-scroll-infinite,
+[class*="animate-"] {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Iqamah countdown pulse animation - GPU accelerated */
 @keyframes iqamah-pulse {
   0%, 100% {
-    transform: scale(1);
+    transform: scale3d(1, 1, 1);
   }
   50% {
-    transform: scale(1.05);
+    transform: scale3d(1.05, 1.05, 1);
   }
 }
 
 .animate-iqamah-pulse {
   animation: iqamah-pulse 2s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Weather effects animations - Optimized with GPU acceleration for Android TV */
+@keyframes rain-fall {
+  0% {
+    transform: translate3d(0, -100vh, 0);
+  }
+  100% {
+    transform: translate3d(0, 100vh, 0);
+  }
+}
+
+@keyframes snow-fall {
+  0% {
+    transform: translate3d(0, -100vh, 0);
+  }
+  100% {
+    transform: translate3d(var(--sway, 0), 100vh, 0);
+  }
 }

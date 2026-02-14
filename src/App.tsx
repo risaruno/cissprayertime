@@ -480,7 +480,7 @@ function App() {
       <div className="relative z-10 py-[1.5vh] px-[2vw]">
         <div className="flex items-center justify-center gap-12">
           {/* Left Logo */}
-          <div className="w-[clamp(60px,8vw,100px)] h-[clamp(60px,8vw,100px)] rounded-full bg-white/95 flex items-center justify-center p-3 shadow-2xl backdrop-blur-sm transition-transform hover:scale-105 flex-shrink-0">
+          <div className="w-[clamp(60px,8vw,100px)] h-[clamp(60px,8vw,100px)] rounded-full bg-white/95 flex items-center justify-center p-3 shadow-2xl transition-transform hover:scale-105 flex-shrink-0">
             <img 
               src={LeftLogo}
               alt="Masjid Logo" 
@@ -496,7 +496,7 @@ function App() {
             <h2 className="text-[clamp(1rem,2vw,1.5rem)] font-semibold text-white/90 drop-shadow-lg mb-2">
               Center of Islamic Studies Seoul
             </h2>
-            <span className="inline-flex items-center bg-gradient-to-r from-blue-500/40 to-blue-800/40 backdrop-blur-sm border-2 border-blue-400/60 rounded-full px-6 py-2 mx-4 shadow-lg">
+            <span className="inline-flex items-center bg-gradient-to-r from-blue-500/40 to-blue-800/40 backdrop-blur-[2px] border-2 border-blue-400/60 rounded-full px-6 py-2 mx-4 shadow-lg">
               <span className="text-[clamp(0.75rem,1.5vw,1.125rem)] font-bold text-white/90 drop-shadow-md flex items-center justify-center gap-3">
                 <MapPin className="w-6 h-6" />
                 서울특별시 영등포구 신길로 60다길 21
@@ -505,7 +505,7 @@ function App() {
           </div>
 
           {/* Right Logo */}
-          <div className="w-[clamp(60px,8vw,100px)] h-[clamp(60px,8vw,100px)] rounded-full bg-white/95 flex items-center justify-center p-3 shadow-2xl backdrop-blur-sm transition-transform hover:scale-105 flex-shrink-0">
+          <div className="w-[clamp(60px,8vw,100px)] h-[clamp(60px,8vw,100px)] rounded-full bg-white/95 flex items-center justify-center p-3 shadow-2xl transition-transform hover:scale-105 flex-shrink-0">
             <img 
               src={RightLogo}
               alt="CISS Logo" 
@@ -650,7 +650,7 @@ function App() {
                     {/* Until Adhan Tooltip */}
                     {adhanCountdown && (
                       <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 z-50">
-                        <div className="bg-gradient-to-br from-green-500/95 to-green-600/95 backdrop-blur-md rounded-lg px-4 py-2 shadow-xl border-2 border-green-400">
+                        <div className="bg-gradient-to-br from-green-500/95 to-green-600/95 backdrop-blur-[2px] rounded-lg px-4 py-2 shadow-xl border-2 border-green-400">
                           <div className="text-center">
                             <p className="text-[clamp(0.65rem,1.2vw,0.75rem)] text-white/90 font-semibold mb-1">Until Adhan</p>
                             <p className="text-[clamp(1rem,1.75vw,1.25rem)] font-bold text-white font-mono">{adhanCountdown}</p>
@@ -723,7 +723,7 @@ function App() {
                         </span>
                         
                         {/* Bank Account Chip - Yellowish Color */}
-                        <span className="inline-flex items-center bg-gradient-to-r from-yellow-500/40 to-amber-600/40 backdrop-blur-sm border-2 border-yellow-400/60 rounded-full px-6 py-2 mx-4 shadow-lg">
+                        <span className="inline-flex items-center bg-gradient-to-r from-yellow-500/40 to-amber-600/40 backdrop-blur-[2px] border-2 border-yellow-400/60 rounded-full px-6 py-2 mx-4 shadow-lg">
                           <svg
                             className="w-5 h-5 mr-2 text-yellow-100"
                             fill="none"
@@ -761,7 +761,7 @@ function App() {
                         </span>
                         
                         {/* Bank Account Chip - Yellowish Color */}
-                        <span className="inline-flex items-center bg-gradient-to-r from-yellow-500/40 to-amber-600/40 backdrop-blur-sm border-2 border-yellow-400/60 rounded-full px-6 py-2 mx-4 shadow-lg">
+                        <span className="inline-flex items-center bg-gradient-to-r from-yellow-500/40 to-amber-600/40 backdrop-blur-[2px] border-2 border-yellow-400/60 rounded-full px-6 py-2 mx-4 shadow-lg">
                           <svg
                             className="w-5 h-5 mr-2 text-yellow-100"
                             fill="none"
@@ -801,12 +801,12 @@ function App() {
           {!showDebugPanel ? (
             <button
               onClick={() => setShowDebugPanel(true)}
-              className="bg-purple-600/90 hover:bg-purple-700/90 text-white px-4 py-2 rounded-lg shadow-xl font-mono text-sm backdrop-blur-sm transition-colors"
+              className="bg-purple-600/90 hover:bg-purple-700/90 text-white px-4 py-2 rounded-lg shadow-xl font-mono text-sm backdrop-blur-[2px] transition-colors"
             >
               🕐 Debug Time
             </button>
           ) : (
-            <div className="bg-black/90 backdrop-blur-sm text-white p-4 rounded-lg shadow-2xl border border-purple-500/50 font-mono text-sm min-w-[320px]">
+            <div className="bg-black/90 backdrop-blur-[2px] text-white p-4 rounded-lg shadow-2xl border border-purple-500/50 font-mono text-sm min-w-[320px]">
               <div className="flex items-center justify-between mb-3 border-b border-white/20 pb-2">
                 <h3 className="font-bold text-purple-400">⏰ Time Debug Control</h3>
                 <button
@@ -958,12 +958,12 @@ function App() {
           {!showIqamahPanel ? (
             <button
               onClick={() => setShowIqamahPanel(true)}
-              className="bg-orange-600/90 hover:bg-orange-700/90 text-white px-4 py-2 rounded-lg shadow-xl font-mono text-sm backdrop-blur-sm transition-colors"
+              className="bg-orange-600/90 hover:bg-orange-700/90 text-white px-4 py-2 rounded-lg shadow-xl font-mono text-sm backdrop-blur-[2px] transition-colors"
             >
               ⏱️ Iqamah Settings
             </button>
           ) : (
-            <div className="bg-black/90 backdrop-blur-sm text-white p-4 rounded-lg shadow-2xl border border-orange-500/50 font-mono text-sm min-w-[320px]">
+            <div className="bg-black/90 backdrop-blur-[2px] text-white p-4 rounded-lg shadow-2xl border border-orange-500/50 font-mono text-sm min-w-[320px]">
               <div className="flex items-center justify-between mb-3 border-b border-white/20 pb-2">
                 <h3 className="font-bold text-orange-400">⏱️ Iqamah Time Control</h3>
                 <button
