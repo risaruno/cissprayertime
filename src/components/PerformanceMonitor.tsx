@@ -24,7 +24,7 @@ function PerformanceMonitor() {
   useEffect(() => {
     let frameCount = 0;
     let lastTime = performance.now();
-    let animationFrameId: number;
+    let animationFrameId: number | undefined;
 
     const measurePerformance = () => {
       frameCount++;
@@ -78,7 +78,7 @@ function PerformanceMonitor() {
     window.addEventListener('keydown', handleKeyPress);
 
     return () => {
-      if (animationFrameId) {
+      if (animationFrameId !== undefined) {
         cancelAnimationFrame(animationFrameId);
       }
       window.removeEventListener('keydown', handleKeyPress);

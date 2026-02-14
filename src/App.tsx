@@ -340,24 +340,25 @@ function App() {
     }
   }, [fetchPrayerTimes, fetchWeather, location]);
 
-  // Initial background update
+  // Update background every minute with a dedicated interval
   useEffect(() => {
     if (prayerTimes) {
       updateBackground(prayerTimes, currentTime);
+      
+      const interval = setInterval(() => {
+        updateBackground(prayerTimes, new Date());
+      }, 60000); // Update every minute
+      
+      return () => clearInterval(interval);
     }
-  }, [prayerTimes, updateBackground, currentTime]);
+  }, [prayerTimes, updateBackground]);
 
-  // Update next prayer and background when currentTime changes (for debug mode or every minute)
+  // Update next prayer when currentTime changes
   useEffect(() => {
     if (prayerTimes) {
       updateNextPrayer(prayerTimes, currentTime);
-      // Only update background once per minute to save resources
-      const currentSeconds = currentTime.getSeconds();
-      if (currentSeconds === 0) {
-        updateBackground(prayerTimes, currentTime);
-      }
     }
-  }, [currentTime, prayerTimes, iqamahTimes, updateBackground]);
+  }, [currentTime, prayerTimes, iqamahTimes]);
 
   // Auto-refresh prayer times daily at midnight for Smart TVs
   useEffect(() => {
