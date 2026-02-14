@@ -1,0 +1,10 @@
+<svg width="280" height="112" viewBox="0 0 280 112" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g>
+    <!-- Simplified cloud shape -->
+    <ellipse cx="70" cy="70" rx="49" ry="35" fill="white" opacity="0.85" />
+    <ellipse cx="112" cy="63" rx="56" ry="39" fill="white" opacity="0.9" />
+    <ellipse cx="154" cy="70" rx="53" ry="36" fill="white" opacity="0.85" />
+    <!-- Bottom fill -->
+    <rect x="42" y="63" width="175" height="28" fill="white" opacity="0.85" />
+  </g>
+</svg>

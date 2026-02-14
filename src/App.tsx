@@ -93,9 +93,8 @@ function App() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [backgroundImage, setBackgroundImage] = useState(Syurk);
   const [calendar, setCalendar] = useState<CalendarData | null>(null);
-  const [countdown, setCountdown] = useState<string>('');
   const [lastFetchDate, setLastFetchDate] = useState<string>('');
-  
+
   // Debug: Override time for testing using offset from real time
   const [debugTimeOffset, setDebugTimeOffset] = useState<number>(0); // Offset in milliseconds from real time (0 = real time)
   const [showDebugPanel, setShowDebugPanel] = useState(false);
@@ -112,10 +111,7 @@ function App() {
     'Maghrib': 15,
     'Isha': 15
   });
-  const [iqamahCountdown, setIqamahCountdown] = useState<string>('');
-  const [iqamahTooltipDelay, setIqamahTooltipDelay] = useState<number>(0); // minutes after adhan to show iqamah tooltip (0 = immediately after adhan)
-  const [currentIqamahPrayer, setCurrentIqamahPrayer] = useState<string | null>(null); // Track which prayer is in iqamah period
-  
+
   // format current time - Update less frequently to save resources
   const [currentTime, setCurrentTime] = useState(new Date());
   
@@ -221,18 +217,22 @@ function App() {
       const [hours, minutes] = time.split(':');
       const prayerTime = new Date();
       prayerTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-      return { name, time: prayerTime };
+
+      const iqamahMinutes = iqamahTimes[name] || 0;
+      const iqamahTime = new Date(prayerTime.getTime() + iqamahMinutes * 60 * 1000);
+
+      return { name, time: prayerTime, iqamahTime };
     });
 
     todayPrayers.sort((a, b) => a.time.getTime() - b.time.getTime());
-    
-    // Find the next prayer (upcoming prayer that hasn't started yet)
-    const next = todayPrayers.find(prayer => prayer.time > now);
-    
+
+    // Find next prayer based on iqamah time (stays active until iqamah passes)
+    const next = todayPrayers.find(prayer => prayer.iqamahTime > now);
+
     // Find the current prayer (most recent prayer that has passed)
     const passedPrayers = todayPrayers.filter(prayer => prayer.time <= now);
     const current = passedPrayers.length > 0 ? passedPrayers[passedPrayers.length - 1] : null;
-    
+
     // Set next prayer
     if (!next && todayPrayers.length > 0) {
       const tomorrowPrayer = {
@@ -243,7 +243,7 @@ function App() {
     } else {
       setNextPrayer(next || null);
     }
-    
+
     // Set current prayer
     if (current) {
       setCurrentPrayer(current);
@@ -356,73 +356,7 @@ function App() {
       updateNextPrayer(prayerTimes, currentTime);
       updateBackground(prayerTimes, currentTime);
     }
-  }, [currentTime, prayerTimes, updateBackground]);
-
-  // Update countdown based on currentTime (syncs with both debug and real time)
-  useEffect(() => {
-    if (!prayerTimes) {
-      setCountdown('');
-      setIqamahCountdown('');
-      setCurrentIqamahPrayer(null);
-      return;
-    }
-
-    const now = currentTime;
-    
-    // Check all prayers to see if we're in an iqamah period
-    const prayers = Object.entries(prayerTimes).filter(([name]) => name !== 'Sunrise');
-    let inIqamahPeriod = false;
-    
-    for (const [prayerName, prayerTimeStr] of prayers) {
-      const [hours, minutes] = prayerTimeStr.split(':');
-      const prayerTime = new Date();
-      prayerTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-      
-      const timeSinceAdhan = now.getTime() - prayerTime.getTime();
-      const minutesSinceAdhan = timeSinceAdhan / 60000;
-      
-      // Calculate iqamah time for this prayer
-      const iqamahMinutes = iqamahTimes[prayerName] || 0;
-      const iqamahTime = new Date(prayerTime.getTime() + iqamahMinutes * 60 * 1000);
-      const iqamahTimeLeft = iqamahTime.getTime() - now.getTime();
-      
-      // Check if we're in the iqamah period for this prayer
-      if (timeSinceAdhan >= 0 && iqamahTimeLeft > 0 && minutesSinceAdhan >= iqamahTooltipDelay) {
-        inIqamahPeriod = true;
-        
-        // Calculate and set iqamah countdown
-        const iqHours = Math.floor(iqamahTimeLeft / 3600000);
-        const iqMinutes = Math.floor((iqamahTimeLeft % 3600000) / 60000);
-        const iqSeconds = Math.floor((iqamahTimeLeft % 60000) / 1000);
-        setIqamahCountdown(`${iqHours.toString().padStart(2, '0')}:${iqMinutes.toString().padStart(2, '0')}:${iqSeconds.toString().padStart(2, '0')}`);
-        setCurrentIqamahPrayer(prayerName);
-        setCountdown(''); // Don't show adhan countdown during iqamah period
-        break;
-      }
-    }
-    
-    // If not in iqamah period, show countdown to next prayer
-    if (!inIqamahPeriod) {
-      setIqamahCountdown('');
-      setCurrentIqamahPrayer(null);
-      
-      // Show countdown to next prayer
-      if (nextPrayer) {
-        const timeLeft = nextPrayer.time.getTime() - now.getTime();
-        
-        if (timeLeft > 0) {
-          const hours = Math.floor(timeLeft / 3600000);
-          const minutes = Math.floor((timeLeft % 3600000) / 60000);
-          const seconds = Math.floor((timeLeft % 60000) / 1000);
-          setCountdown(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
-        } else {
-          setCountdown('');
-        }
-      } else {
-        setCountdown('');
-      }
-    }
-  }, [nextPrayer, iqamahTimes, iqamahTooltipDelay, currentTime, prayerTimes]);
+  }, [currentTime, prayerTimes, iqamahTimes, updateBackground]);
 
   // Auto-refresh prayer times daily at midnight for Smart TVs
   useEffect(() => {
@@ -512,49 +446,41 @@ function App() {
   // Determine if it's daytime based on prayer times
   const isDaytime = () => {
     if (!prayerTimes) return true; // Default to day
-    
+
     const now = currentTime;
     const currentTimeInMinutes = now.getHours() * 60 + now.getMinutes();
-    
+
     const parseTime = (time: string) => {
       const [hours, minutes] = time.split(':').map(Number);
       return hours * 60 + minutes;
     };
-    
+
     const sunrise = parseTime(prayerTimes.Sunrise);
     const maghrib = parseTime(prayerTimes.Maghrib);
-    
+
     // Daytime is from Sunrise to Maghrib
     return currentTimeInMinutes >= sunrise && currentTimeInMinutes < maghrib;
   };
 
-  // Determine if clouds should be shown based on weather
-  const shouldShowClouds = () => {
-    if (!weather) return false;
-    
-    const cloudyConditions = ['Clouds', 'Rain', 'Drizzle', 'Thunderstorm', 'Snow', 'Mist', 'Fog'];
-    return cloudyConditions.includes(weather.main);
-  };
-
   return (
-    <div 
-      className="min-h-screen bg-cover bg-center bg-no-repeat relative flex flex-col overflow-hidden"
+    <div
+      className="h-screen max-h-screen bg-cover bg-center bg-no-repeat relative flex flex-col overflow-hidden"
       style={{ backgroundImage: `url(${backgroundImage})` }}
     >
       {/* Overlay gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/40" />
 
-      {/* Weather Effects (Clouds, Rain, Snow) - positioned in upper section behind header */}
-      <WeatherEffects 
-        showClouds={shouldShowClouds()}
+      {/* Weather Effects (Rain, Snow) - positioned in upper section behind header */}
+      <WeatherEffects
+        showClouds={false}
         weatherCondition={debugWeatherEffect || weather?.main}
       />
 
       {/* Mosque Header - Top Center with Logos - BIGGER */}
-      <div className="relative z-10 py-10 px-8">
+      <div className="relative z-10 py-[1.5vh] px-[2vw]">
         <div className="flex items-center justify-center gap-12">
           {/* Left Logo */}
-          <div className="w-32 h-32 rounded-full bg-white/95 flex items-center justify-center p-3 shadow-2xl backdrop-blur-sm transition-transform hover:scale-105 flex-shrink-0">
+          <div className="w-[clamp(60px,8vw,100px)] h-[clamp(60px,8vw,100px)] rounded-full bg-white/95 flex items-center justify-center p-3 shadow-2xl backdrop-blur-sm transition-transform hover:scale-105 flex-shrink-0">
             <img 
               src={LeftLogo}
               alt="Masjid Logo" 
@@ -564,14 +490,14 @@ function App() {
 
           {/* Mosque Info */}
           <div className="text-center flex-shrink-0">
-            <h1 className="text-6xl font-bold text-white drop-shadow-2xl mb-2">
+            <h1 className="text-[clamp(1.5rem,3.5vw,3rem)] font-bold text-white drop-shadow-2xl mb-2">
               Masjid Al-Falah, Seoul
             </h1>
-            <h2 className="text-3xl font-semibold text-white/90 drop-shadow-lg mb-2">
+            <h2 className="text-[clamp(1rem,2vw,1.5rem)] font-semibold text-white/90 drop-shadow-lg mb-2">
               Center of Islamic Studies Seoul
             </h2>
             <span className="inline-flex items-center bg-gradient-to-r from-blue-500/40 to-blue-800/40 backdrop-blur-sm border-2 border-blue-400/60 rounded-full px-6 py-2 mx-4 shadow-lg">
-              <span className="text-2xl font-bold text-white/90 drop-shadow-md flex items-center justify-center gap-3">
+              <span className="text-[clamp(0.75rem,1.5vw,1.125rem)] font-bold text-white/90 drop-shadow-md flex items-center justify-center gap-3">
                 <MapPin className="w-6 h-6" />
                 서울특별시 영등포구 신길로 60다길 21
               </span>
@@ -579,7 +505,7 @@ function App() {
           </div>
 
           {/* Right Logo */}
-          <div className="w-32 h-32 rounded-full bg-white/95 flex items-center justify-center p-3 shadow-2xl backdrop-blur-sm transition-transform hover:scale-105 flex-shrink-0">
+          <div className="w-[clamp(60px,8vw,100px)] h-[clamp(60px,8vw,100px)] rounded-full bg-white/95 flex items-center justify-center p-3 shadow-2xl backdrop-blur-sm transition-transform hover:scale-105 flex-shrink-0">
             <img 
               src={RightLogo}
               alt="CISS Logo" 
@@ -590,29 +516,20 @@ function App() {
       </div>
 
       {/* Main Content Grid - Time/Weather Left, Hadith Right */}
-      <div className="relative z-10 flex-1 px-8 max-w-[1920px] mx-auto w-full flex items-start justify-center py-4">
+      <div className="relative z-10 flex-1 px-[2vw] max-w-[1920px] mx-auto w-full flex items-start justify-center py-[2vh]">
         <div className="grid grid-cols-2 gap-8 h-full">
-        {/* Left Side - Time and Weather - SMALLER */}
-        <div className="flex flex-col gap-1">
-          {/* Current Time */}
-          <h1 className="text-6xl font-bold text-white drop-shadow-2xl">
-            {formatTime(currentTime)}
-          </h1>
-          {/* Date */}
-          <p className="text-lg text-white/90 drop-shadow-lg">
-            {calendar ? `${calendar.gregorian}  |  ${calendar.hijri}` : formatDate(currentTime)}
-          </p>
-
-          {/* Weather Info */}
+        {/* Left Side - Time and Weather - Horizontal Layout */}
+        <div className="flex items-center gap-6">
+          {/* Weather Info on Left */}
           {weather && (
-            <div className="flex items-center gap-2 mt-1">
-              <img 
+            <div className="flex items-center gap-2">
+              <img
                 src={getWeatherIcon(weather.icon)}
                 alt={weather.description}
-                className="w-16 h-16"
+                className="w-[clamp(48px,5vw,64px)] h-[clamp(48px,5vw,64px)]"
               />
               <div className="flex flex-col">
-                <span className="text-2xl font-semibold text-white drop-shadow-lg">
+                <span className="text-[clamp(1.25rem,2vw,1.5rem)] font-semibold text-white drop-shadow-lg">
                   {Math.round(weather.temp)}°C
                 </span>
                 <span className="text-base text-white/80 drop-shadow-md capitalize">
@@ -625,7 +542,7 @@ function App() {
                     <span className="text-white/80">Loading...</span>
                   </span>
                 )}
-                
+
                 {location && !loading && (
                   <span className="flex items-center gap-2">
                     <MapPin className="w-5 h-5 text-white/80" />
@@ -635,11 +552,23 @@ function App() {
               </div>
             </div>
           )}
+
+          {/* Time and Date on Right */}
+          <div className="flex flex-col gap-1">
+            {/* Current Time */}
+            <h1 className="text-[clamp(2.5rem,5vw,3.75rem)] font-bold text-white drop-shadow-2xl">
+              {formatTime(currentTime)}
+            </h1>
+            {/* Date */}
+            <p className="text-[clamp(0.875rem,1.5vw,1.125rem)] text-white/90 drop-shadow-lg">
+              {calendar ? `${calendar.gregorian}  |  ${calendar.hijri}` : formatDate(currentTime)}
+            </p>
+          </div>
         </div>
 
         {/* Right Side - Celestial Body (Sun/Moon) */}
         <div className="flex items-center justify-end">
-          <CelestialBody 
+          <CelestialBody
             isDaytime={isDaytime()}
             moonPhase={weather?.moonPhase}
             latitude={weather?.latitude}
@@ -652,55 +581,113 @@ function App() {
       {/* Prayer Times - Bottom */}
       {prayerTimes && (
         <div className="relative z-10 mt-auto max-w-[1920px] mx-auto w-full">
-          <div className="p-8 pb-4">
+          <div className="p-[2vw] pb-[1vh]">
             <div className="grid grid-cols-6 gap-4 max-w-7xl mx-auto">
               {Object.entries(prayerTimes).map(([prayer, time]) => {
-                const isCurrentPrayer = currentPrayer?.name === prayer; // Green background - we're in this prayer period
-                const isNextPrayer = nextPrayer?.name === prayer; // Show countdown tooltip
+                const isActive = nextPrayer?.name === prayer;
                 const isSyuruq = prayer === 'Sunrise';
-                
+
+                // Calculate countdown to Adhan (tooltip above)
+                const getAdhanCountdown = () => {
+                  if (!isActive) return null;
+                  const [hours, minutes] = time.split(':').map(Number);
+                  const prayerDate = new Date(currentTime);
+                  prayerDate.setHours(hours, minutes, 0, 0);
+                  const timeUntilAdhan = prayerDate.getTime() - currentTime.getTime();
+
+                  if (timeUntilAdhan > 0) {
+                    const h = Math.floor(timeUntilAdhan / 3600000);
+                    const m = Math.floor((timeUntilAdhan % 3600000) / 60000);
+                    const s = Math.floor((timeUntilAdhan % 60000) / 1000);
+                    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                  }
+                  return null; // Don't show during iqamah countdown
+                };
+
+                // Calculate iqamah info (bottom section all prayers)
+                const getPrayerInfo = () => {
+                  if (isSyuruq) return null;
+
+                  const [hours, minutes] = time.split(':').map(Number);
+                  const prayerDate = new Date(currentTime);
+                  prayerDate.setHours(hours, minutes, 0, 0);
+
+                  const iqamahMinutes = iqamahTimes[prayer] || 0;
+                  const iqamahTime = new Date(prayerDate.getTime() + iqamahMinutes * 60 * 1000);
+
+                  // Past iqamah? Show tomorrow's delay
+                  if (iqamahTime.getTime() < currentTime.getTime()) {
+                    prayerDate.setDate(prayerDate.getDate() + 1);
+                    return { value: `+${iqamahMinutes} min`, isCountdown: false };
+                  }
+
+                  const timeUntilAdhan = prayerDate.getTime() - currentTime.getTime();
+
+                  // Before adhan: show delay
+                  if (timeUntilAdhan > 0) {
+                    return { value: `+${iqamahMinutes} min`, isCountdown: false };
+                  }
+
+                  // After adhan, before iqamah: show countdown
+                  const timeUntilIqamah = iqamahTime.getTime() - currentTime.getTime();
+                  if (timeUntilIqamah > 0) {
+                    const h = Math.floor(timeUntilIqamah / 3600000);
+                    const m = Math.floor((timeUntilIqamah % 3600000) / 60000);
+                    const s = Math.floor((timeUntilIqamah % 60000) / 1000);
+                    return {
+                      value: `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`,
+                      isCountdown: true
+                    };
+                  }
+                  return null;
+                };
+
+                const adhanCountdown = getAdhanCountdown();
+                const prayerInfo = getPrayerInfo();
+
                 return (
                   <div key={prayer} className="relative">
-                    {/* Adhan Countdown Tooltip - Green (only show for next prayer when NOT in iqamah period) */}
-                    {isNextPrayer && countdown && !currentIqamahPrayer && (
+                    {/* Until Adhan Tooltip */}
+                    {adhanCountdown && (
                       <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 z-50">
-                        <div className="bg-gradient-to-br from-green-500/95 to-green-600/95 backdrop-blur-md rounded-lg px-6 py-3 shadow-xl border-2 border-green-400">
-                          <div className="text-center space-y-2">
-                            {/* Adhan Time */}
-                            <div>
-                              <p className="text-xs text-white/90 font-semibold mb-1 whitespace-nowrap">Time Until Adhan</p>
-                              <p className="text-2xl font-bold text-white font-mono">{countdown}</p>
-                            </div>
+                        <div className="bg-gradient-to-br from-green-500/95 to-green-600/95 backdrop-blur-md rounded-lg px-4 py-2 shadow-xl border-2 border-green-400">
+                          <div className="text-center">
+                            <p className="text-[clamp(0.65rem,1.2vw,0.75rem)] text-white/90 font-semibold mb-1">Until Adhan</p>
+                            <p className="text-[clamp(1rem,1.75vw,1.25rem)] font-bold text-white font-mono">{adhanCountdown}</p>
                           </div>
-                          {/* Arrow pointing down */}
                           <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-green-600/95"></div>
                         </div>
                       </div>
                     )}
-                    
-                    {/* Iqamah Countdown Tooltip - Orange (appears for prayer in iqamah period) */}
-                    {currentIqamahPrayer === prayer && iqamahCountdown && !isSyuruq && (
-                      <div className="absolute -top-24 left-1/2 transform -translate-x-1/2 z-50">
-                        <div className="bg-gradient-to-br from-orange-500/95 to-orange-600/95 backdrop-blur-md rounded-lg px-6 py-3 shadow-xl border-2 border-orange-400">
-                          <div className="text-center">
-                            <p className="text-xs text-white/90 font-semibold mb-1 whitespace-nowrap">Time Until Iqamah</p>
-                            <p className="text-2xl font-bold text-white font-mono">{iqamahCountdown}</p>
-                            <p className="text-xs text-orange-100/90">{iqamahTimes[prayer]} minutes after adhan</p>
-                          </div>
-                          {/* Arrow pointing down */}
-                          <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-orange-600/95"></div>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <Glass active={isCurrentPrayer}>
-                      <div className="p-6 flex flex-col items-center justify-center space-y-2">
-                        <h3 className={`text-2xl font-bold ${isCurrentPrayer ? 'text-green-100' : isSyuruq ? 'text-yellow-100' : 'text-white'} drop-shadow-lg`}>
+
+                    <Glass active={isActive}>
+                      <div className="p-3 flex flex-col items-center justify-center space-y-2">
+                        <h3 className={`text-[clamp(1.125rem,2vw,1.5rem)] font-bold ${isActive ? 'text-green-100' : isSyuruq ? 'text-yellow-100' : 'text-white'} drop-shadow-lg`}>
                           {displayPrayerName(prayer)}
                         </h3>
-                        <p className={`text-3xl font-semibold ${isCurrentPrayer ? 'text-green-50' : isSyuruq ? 'text-yellow-50' : 'text-white/90'} drop-shadow-md font-mono`}>
+                        <p className={`text-[clamp(1.5rem,2.5vw,1.875rem)] font-semibold ${isActive ? 'text-green-50' : isSyuruq ? 'text-yellow-50' : 'text-white/90'} drop-shadow-md font-mono`}>
                           {time}
                         </p>
+
+                        {/* Iqamah info at bottom */}
+                        {prayerInfo ? (
+                          <div className={`w-full pt-2 mt-1 border-t ${prayerInfo.isCountdown ? 'border-amber-500/60' : 'border-white/20'}`}>
+                            <p className={`
+                              ${prayerInfo.isCountdown ? 'text-[clamp(1rem,1.75vw,1.375rem)] text-amber-400 animate-iqamah-pulse' : 'text-[clamp(0.875rem,1.5vw,1.125rem)]'}
+                              ${!prayerInfo.isCountdown && isActive ? 'text-green-100' : ''}
+                              ${!prayerInfo.isCountdown && !isActive ? 'text-white/90' : ''}
+                              font-bold ${prayerInfo.isCountdown ? 'font-mono' : ''} text-center drop-shadow-lg
+                            `}>
+                              {prayerInfo.value}
+                            </p>
+                          </div>
+                        ) : isSyuruq ? (
+                          <div className="w-full pt-2 mt-1 border-t border-transparent">
+                            <p className="text-[clamp(0.875rem,1.5vw,1.125rem)] font-bold text-center opacity-0">
+                              Placeholder
+                            </p>
+                          </div>
+                        ) : null}
                       </div>
                     </Glass>
                   </div>
@@ -711,7 +698,7 @@ function App() {
         </div>
       )}
 
-      <div className="relative z-10">
+      <div className="relative z-10 mt-4">
         {/* Running Text - Alternating Quotes & Bank Information */}
         <div className="relative">
           <div className="liquidGlass-wrapper">
@@ -719,14 +706,14 @@ function App() {
             <div className="liquidGlass-tint"></div>
             <div className="liquidGlass-shine"></div>
             <div className="liquidGlass-text w-full">
-              <div className="py-2 border-t border-white/10">
+              <div className="py-[2vh] border-t border-white/10">
                 <div className="overflow-hidden relative">
                   <div className="animate-scroll-infinite whitespace-nowrap inline-flex items-center will-change-transform">
                     {/* First set - Original */}
                     {QURAN_QUOTES.map((quote, index) => (
                       <div key={`original-${index}`} className="inline-flex items-center flex-shrink-0">
                         {/* Quran Quote */}
-                        <span className="text-xl font-medium text-white drop-shadow-lg px-8">
+                        <span className="text-[clamp(0.875rem,1.75vw,1.25rem)] font-medium text-white drop-shadow-lg px-8">
                           {quote}
                         </span>
                         
@@ -737,18 +724,18 @@ function App() {
                         
                         {/* Bank Account Chip - Yellowish Color */}
                         <span className="inline-flex items-center bg-gradient-to-r from-yellow-500/40 to-amber-600/40 backdrop-blur-sm border-2 border-yellow-400/60 rounded-full px-6 py-2 mx-4 shadow-lg">
-                          <svg 
-                            className="w-5 h-5 mr-2 text-yellow-100" 
-                            fill="none" 
-                            viewBox="0 0 24 24" 
+                          <svg
+                            className="w-5 h-5 mr-2 text-yellow-100"
+                            fill="none"
+                            viewBox="0 0 24 24"
                             stroke="currentColor"
                           >
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                           </svg>
-                          <span className="text-xl font-bold text-white drop-shadow-md">
+                          <span className="text-[clamp(0.875rem,1.75vw,1.25rem)] font-bold text-white drop-shadow-md">
                             Woori Bank 1005-904-584-084
                           </span>
-                          <span className="text-lg font-medium text-yellow-50 ml-2 drop-shadow-md">
+                          <span className="text-[clamp(0.75rem,1.5vw,1.125rem)] font-medium text-yellow-50 ml-2 drop-shadow-md">
                             (서울이슬람교육센터)
                           </span>
                         </span>
@@ -764,7 +751,7 @@ function App() {
                     {QURAN_QUOTES.map((quote, index) => (
                       <div key={`duplicate-${index}`} className="inline-flex items-center flex-shrink-0">
                         {/* Quran Quote */}
-                        <span className="text-xl font-medium text-white drop-shadow-lg px-8">
+                        <span className="text-[clamp(0.875rem,1.75vw,1.25rem)] font-medium text-white drop-shadow-lg px-8">
                           {quote}
                         </span>
                         
@@ -775,18 +762,18 @@ function App() {
                         
                         {/* Bank Account Chip - Yellowish Color */}
                         <span className="inline-flex items-center bg-gradient-to-r from-yellow-500/40 to-amber-600/40 backdrop-blur-sm border-2 border-yellow-400/60 rounded-full px-6 py-2 mx-4 shadow-lg">
-                          <svg 
-                            className="w-5 h-5 mr-2 text-yellow-100" 
-                            fill="none" 
-                            viewBox="0 0 24 24" 
+                          <svg
+                            className="w-5 h-5 mr-2 text-yellow-100"
+                            fill="none"
+                            viewBox="0 0 24 24"
                             stroke="currentColor"
                           >
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                           </svg>
-                          <span className="text-xl font-bold text-white drop-shadow-md">
+                          <span className="text-[clamp(0.875rem,1.75vw,1.25rem)] font-bold text-white drop-shadow-md">
                             Woori Bank 1005-904-584-084
                           </span>
-                          <span className="text-lg font-medium text-yellow-50 ml-2 drop-shadow-md">
+                          <span className="text-[clamp(0.75rem,1.5vw,1.125rem)] font-medium text-yellow-50 ml-2 drop-shadow-md">
                             (서울이슬람교육센터)
                           </span>
                         </span>

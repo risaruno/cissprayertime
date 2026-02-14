@@ -75,75 +75,44 @@
   }
 }
 
-/* Cloud animations - simplified for better performance, use transform3d for GPU acceleration */
-@keyframes cloud-drift-1 {
-  0% {
-    transform: translate3d(-100%, 0, 0);
+/* Responsive adjustments for low-resolution TVs */
+@media (max-height: 800px) {
+  .liquidGlass-wrapper.dock {
+    padding: 0.4rem;
   }
-  100% {
-    transform: translate3d(100vw, 0, 0);
+
+  .liquidGlass-text {
+    font-size: 1.5rem;
   }
 }
 
-@keyframes cloud-drift-2 {
-  0% {
-    transform: translate3d(-150%, 0, 0);
+@media (max-height: 720px) {
+  .liquidGlass-wrapper.dock {
+    padding: 0.3rem;
+    border-radius: 1.5rem;
   }
-  100% {
-    transform: translate3d(110vw, 0, 0);
+
+  .liquidGlass-text {
+    font-size: 1.25rem;
   }
 }
 
-@keyframes cloud-drift-3 {
-  0% {
-    transform: translate3d(-120%, 0, 0);
-  }
-  100% {
-    transform: translate3d(105vw, 0, 0);
-  }
+/* Android TV performance optimizations */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Rain animation - falling from top to bottom */
-@keyframes rain-fall {
-  0% {
-    transform: translate3d(0, -20px, 0);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    transform: translate3d(0, calc(100vh - 100px), 0);
-    opacity: 0;
-  }
-}
-
-/* Snow animation - gentle falling with sway */
-@keyframes snow-fall {
-  0% {
-    transform: translate3d(0, -10px, 0);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  25% {
-    transform: translate3d(var(--sway, 10px), 25vh, 0);
+/* Iqamah countdown pulse animation */
+@keyframes iqamah-pulse {
+  0%, 100% {
+    transform: scale(1);
   }
   50% {
-    transform: translate3d(calc(var(--sway, 10px) * -1), 50vh, 0);
+    transform: scale(1.05);
   }
-  75% {
-    transform: translate3d(var(--sway, 10px), 75vh, 0);
-  }
-  90% {
-    opacity: 0.8;
-  }
-  100% {
-    transform: translate3d(0, calc(100vh - 100px), 0);
-    opacity: 0;
-  }
+}
+
+.animate-iqamah-pulse {
+  animation: iqamah-pulse 2s ease-in-out infinite;
 }

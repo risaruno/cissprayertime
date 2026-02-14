@@ -15,7 +15,7 @@ interface CelestialBodyProps {
 const getMoonPhaseStyle = (phase: number) => {
   // phase: 0 = new moon, 0.25 = first quarter, 0.5 = full moon, 0.75 = last quarter
   const percentage = phase * 100;
-  
+
   if (phase < 0.02 || phase > 0.98) {
     // New moon - completely dark
     return { background: 'radial-gradient(circle, #334155 0%, #1e293b 100%)', shadow: 'inset 10px 10px 30px rgba(0,0,0,0.9)' };
@@ -24,13 +24,13 @@ const getMoonPhaseStyle = (phase: number) => {
     return { background: 'radial-gradient(circle, #f8fafc 0%, #cbd5e1 100%)', shadow: 'inset 0 0 20px rgba(255,255,255,0.3)' };
   } else if (phase < 0.5) {
     // Waxing (growing) - dark left, bright right
-    return { 
+    return {
       background: `linear-gradient(90deg, #1e293b 0%, #1e293b ${100 - percentage * 2}%, #cbd5e1 ${100 - percentage * 2}%, #f8fafc 100%)`,
       shadow: 'inset -5px 0 15px rgba(0,0,0,0.7)'
     };
   } else {
     // Waning (shrinking) - bright left, dark right
-    return { 
+    return {
       background: `linear-gradient(90deg, #f8fafc 0%, #cbd5e1 ${(phase - 0.5) * 200}%, #1e293b ${(phase - 0.5) * 200}%, #1e293b 100%)`,
       shadow: 'inset 5px 0 15px rgba(0,0,0,0.7)'
     };
@@ -44,16 +44,16 @@ function CelestialBody({ isDaytime, moonPhase = 0.5, latitude = DEFAULT_LATITUDE
   const moonStyle = getMoonPhaseStyle(moonPhase);
 
   return (
-    <div className="relative h-[100px] flex items-center justify-center">
+    <div className="relative h-[clamp(60px,10vh,100px)] flex items-center justify-center">
       {/* Sun (Daytime) - Reduced animations for performance */}
       {isDaytime && (
-        <div 
+        <div
           className="relative z-20"
           style={{
-            animation: 'float-sun 12s ease-in-out infinite', // Removed sun-glow, slower float (was 8s)
+            animation: 'float-sun 12s ease-in-out infinite',
           }}
         >
-          <div className="w-48 h-48 rounded-full bg-gradient-to-br from-yellow-200 via-yellow-400 to-orange-400 shadow-2xl relative">
+          <div className="w-[clamp(80px,10vw,120px)] h-[clamp(80px,10vw,120px)] rounded-full bg-gradient-to-br from-yellow-200 via-yellow-400 to-orange-400 shadow-2xl relative">
             {/* Simplified sun - removed extra gradient layers */}
             <div className="absolute inset-8 rounded-full bg-gradient-radial from-white/60 to-transparent" />
           </div>
@@ -62,16 +62,16 @@ function CelestialBody({ isDaytime, moonPhase = 0.5, latitude = DEFAULT_LATITUDE
 
       {/* Moon (Nighttime) - Using Astronomy API */}
       {!isDaytime && (
-        <div 
+        <div
           className="relative z-20"
           style={{
-            animation: 'float-moon 15s ease-in-out infinite', // Removed moon-glow, slower float (was 10s)
+            animation: 'float-moon 15s ease-in-out infinite',
           }}
         >
           {moonPhaseImage && !moonLoading ? (
             // Display moon phase image from Astronomy API
-            <div className="w-48 h-48 relative">
-              <img 
+            <div className="w-[clamp(80px,10vw,120px)] h-[clamp(80px,10vw,120px)] relative">
+              <img
                 src={moonPhaseImage}
                 alt="Current Moon Phase"
                 className="w-full h-full object-contain"
@@ -82,8 +82,8 @@ function CelestialBody({ isDaytime, moonPhase = 0.5, latitude = DEFAULT_LATITUDE
             </div>
           ) : (
             // Fallback to gradient-based moon if API is unavailable or loading
-            <div 
-              className="w-48 h-48 rounded-full shadow-2xl relative overflow-hidden"
+            <div
+              className="w-[clamp(80px,10vw,120px)] h-[clamp(80px,10vw,120px)] rounded-full shadow-2xl relative overflow-hidden"
               style={{
                 background: moonStyle.background,
                 boxShadow: moonStyle.shadow,
@@ -106,12 +106,12 @@ const style = document.createElement('style');
 style.textContent = `
   @keyframes sun-rays {
     0% {
-      opacity: 0.4;
-      height: 70px;
-    }
-    100% {
       opacity: 0.8;
       height: 95px;
+    }
+    100% {
+      opacity: 0.4;
+      height: 70px;
     }
   }
 `;
