@@ -111,6 +111,11 @@
   backface-visibility: hidden;
 }
 
+/* Optimize scrolling text container */
+.overflow-hidden {
+  contain: layout;
+}
+
 /* Iqamah countdown pulse animation - GPU accelerated */
 @keyframes iqamah-pulse {
   0%, 100% {

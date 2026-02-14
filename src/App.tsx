@@ -340,21 +340,22 @@ function App() {
     }
   }, [fetchPrayerTimes, fetchWeather, location]);
 
-  // Update background every minute
+  // Initial background update
   useEffect(() => {
-    updateBackground(prayerTimes, currentTime);
-    const interval = setInterval(() => {
+    if (prayerTimes) {
       updateBackground(prayerTimes, currentTime);
-    }, 60000); // Update every minute
-    
-    return () => clearInterval(interval);
+    }
   }, [prayerTimes, updateBackground, currentTime]);
 
-  // Update next prayer and background when currentTime changes (for debug mode)
+  // Update next prayer and background when currentTime changes (for debug mode or every minute)
   useEffect(() => {
     if (prayerTimes) {
       updateNextPrayer(prayerTimes, currentTime);
-      updateBackground(prayerTimes, currentTime);
+      // Only update background once per minute to save resources
+      const currentSeconds = currentTime.getSeconds();
+      if (currentSeconds === 0) {
+        updateBackground(prayerTimes, currentTime);
+      }
     }
   }, [currentTime, prayerTimes, iqamahTimes, updateBackground]);
 
