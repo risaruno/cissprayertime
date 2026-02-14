@@ -1,49 +1,18 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useMemo } from 'react';
 
 // Constants for weather effects positioning and animation
-const CLOUD_POSITION_VARIANCE = 5; // pixels of random variance for cloud positions
-const CLOUD_VARIANCE_OFFSET = 2.5; // center offset for variance calculation
-const CLOUD_ANIMATION_VARIANTS = 3; // number of different cloud drift animations
-const CLOUD_SLOW_MULTIPLIER = 1.5; // speed multiplier when not cloudy
-const PRECIPITATION_START_POSITION = '120px'; // top position where rain/snow starts (below clouds)
+const PRECIPITATION_START_POSITION = '0px'; // top position where rain/snow starts
 
 // Rain and snow particle counts
 const RAIN_DROP_COUNT = 100;
 const SNOWFLAKE_COUNT = 80;
 
 interface WeatherEffectsProps {
-  showClouds: boolean;
   weatherCondition?: string; // 'Rain', 'Snow', 'Thunderstorm', 'Drizzle', etc.
+  showClouds?: boolean; // Keep for backward compatibility but not used
 }
 
-interface CloudPosition {
-  top: number;
-  duration: number;
-  delay: number;
-  size: number;
-  opacity: number;
-}
-
-function WeatherEffects({ showClouds, weatherCondition }: WeatherEffectsProps) {
-  const [cloudPositions, setCloudPositions] = useState<CloudPosition[]>([
-    { top: 5, duration: 70, delay: 0, size: 1.3, opacity: 0.9 },
-    { top: 15, duration: 85, delay: 8, size: 1.1, opacity: 0.85 },
-    { top: 8, duration: 80, delay: 20, size: 1.2, opacity: 0.88 },
-    { top: 12, duration: 90, delay: 35, size: 1.0, opacity: 0.82 },
-  ]);
-
-  useEffect(() => {
-    // Randomize cloud positions slightly on mount for variety
-    setCloudPositions(prev => prev.map(cloud => ({
-      ...cloud,
-      top: cloud.top + Math.random() * CLOUD_POSITION_VARIANCE - CLOUD_VARIANCE_OFFSET,
-    })));
-  }, []);
-
-  // Determine how many clouds to show and their opacity
-  const cloudsToShow = showClouds ? cloudPositions : cloudPositions.slice(0, 1);
-  const cloudOpacityMultiplier = showClouds ? 1 : 0.3;
-
+function WeatherEffects({ weatherCondition }: WeatherEffectsProps) {
   // Determine if precipitation should be shown
   const showRain = weatherCondition === 'Rain' || weatherCondition === 'Drizzle' || weatherCondition === 'Thunderstorm';
   const showSnow = weatherCondition === 'Snow';
@@ -77,36 +46,9 @@ function WeatherEffects({ showClouds, weatherCondition }: WeatherEffectsProps) {
 
   return (
     <>
-      {/* Cloud layer - positioned in upper section, behind header content */}
-      <div className="fixed top-0 left-0 right-0 h-[200px] pointer-events-none z-[5] overflow-hidden">
-        {cloudsToShow.map((cloud, index) => (
-          <div
-            key={index}
-            className="absolute will-change-transform"
-            style={{
-              top: `${cloud.top}%`,
-              animation: `cloud-drift-${(index % CLOUD_ANIMATION_VARIANTS) + 1} ${showClouds ? cloud.duration : cloud.duration * CLOUD_SLOW_MULTIPLIER}s linear infinite`,
-              animationDelay: `${cloud.delay}s`,
-              transform: `scale(${cloud.size * 2})`,
-              opacity: cloud.opacity * cloudOpacityMultiplier,
-            }}
-          >
-            {/* Cloud SVG */}
-            <svg width="280" height="112" viewBox="0 0 280 112" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <g>
-                <ellipse cx="70" cy="70" rx="49" ry="35" fill="white" opacity="0.85" />
-                <ellipse cx="112" cy="63" rx="56" ry="39" fill="white" opacity="0.9" />
-                <ellipse cx="154" cy="70" rx="53" ry="36" fill="white" opacity="0.85" />
-                <rect x="42" y="63" width="175" height="28" fill="white" opacity="0.85" />
-              </g>
-            </svg>
-          </div>
-        ))}
-      </div>
-
-      {/* Rain effect - positioned below clouds */}
+      {/* Rain effect */}
       {showRain && (
-        <div 
+        <div
           className="fixed left-0 right-0 bottom-0 pointer-events-none z-[4] overflow-hidden"
           style={{ top: PRECIPITATION_START_POSITION }}
         >
@@ -125,9 +67,9 @@ function WeatherEffects({ showClouds, weatherCondition }: WeatherEffectsProps) {
         </div>
       )}
 
-      {/* Snow effect - positioned below clouds */}
+      {/* Snow effect */}
       {showSnow && (
-        <div 
+        <div
           className="fixed left-0 right-0 bottom-0 pointer-events-none z-[4] overflow-hidden"
           style={{ top: PRECIPITATION_START_POSITION }}
         >
