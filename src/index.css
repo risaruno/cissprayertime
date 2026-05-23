@@ -1,118 +1,45 @@
-/* Import Poppins font */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
+/* Geometric Sanctuary — design tokens */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   html {
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Inter', sans-serif;
   }
-  
-  .font-arabic {
-    font-family: 'Poppins', sans-serif;
+
+  body {
+    background-color: #0a0e1a;
+    color: white;
+    overflow: hidden;
   }
 }
 
+/* ─── Debug panel fade ──────────────────────────────────────────────────────── */
 @layer utilities {
-  .animate-scroll {
-    animation: scroll 30s linear infinite;
-  }
-  
   .animate-fadeIn {
-    animation: fadeIn 0.3s ease-in-out;
-  }
-}
-
-@keyframes scroll {
-  0% {
-    transform: translateX(100%);
-  }
-  100% {
-    transform: translateX(-100%);
-  }
-}
-
-/* Optimized scroll animation with GPU acceleration - faster speed */
-@keyframes scroll-infinite {
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-  100% {
-    transform: translate3d(-50%, 0, 0);
+    animation: fadeIn 0.2s ease-in-out;
   }
 }
 
 @keyframes fadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  0%   { opacity: 0; transform: translateY(-6px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
-/* Sun animation - simplified, gentle floating only (no glow for performance) */
-@keyframes float-sun {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-15px);
-  }
+/* ─── Rain / Snow (WeatherEffects) ──────────────────────────────────────────── */
+@keyframes rain-fall {
+  0%   { transform: translateY(-20px); }
+  100% { transform: translateY(100vh); }
 }
 
-/* Moon animation - simplified, gentle floating only (no glow for performance) */
-@keyframes float-moon {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+@keyframes snow-fall {
+  0%   { transform: translateY(-10px) translateX(0); }
+  100% { transform: translateY(100vh) translateX(var(--sway, 0px)); }
 }
 
-/* Responsive adjustments for low-resolution TVs */
-@media (max-height: 800px) {
-  .liquidGlass-wrapper.dock {
-    padding: 0.4rem;
-  }
-
-  .liquidGlass-text {
-    font-size: 1.5rem;
-  }
-}
-
-@media (max-height: 720px) {
-  .liquidGlass-wrapper.dock {
-    padding: 0.3rem;
-    border-radius: 1.5rem;
-  }
-
-  .liquidGlass-text {
-    font-size: 1.25rem;
-  }
-}
-
-/* Android TV performance optimizations */
+/* ─── Font smoothing ─────────────────────────────────────────────────────────── */
 * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-/* Iqamah countdown pulse animation */
-@keyframes iqamah-pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-.animate-iqamah-pulse {
-  animation: iqamah-pulse 2s ease-in-out infinite;
 }

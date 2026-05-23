@@ -5,9 +5,10 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Poppins', 'sans-serif'],
-        arabic: ['Poppins', 'sans-serif'],
-        mono: ['Poppins', 'sans-serif'],
+        sans: ['Inter', 'sans-serif'],
+        serif: ['"Playfair Display"', 'serif'],
+        display: ['"Playfair Display"', 'serif'],
+        mono: ['"Roboto Mono"', 'monospace'],
       },
       textShadow: {
         sm: '3px 2px 4px var(--tw-shadow-color)',
