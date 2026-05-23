@@ -65,7 +65,7 @@ function getCountdown(
   const nowMs = now.getTime();
 
   if (!isActive) {
-    if (prayer !== 'Sunrise' && iqamahMins > 0) {
+    if (iqamahMins > 0) {
       return { type: 'offset', value: `+${iqamahMins} min` };
     }
     return null;
@@ -101,7 +101,7 @@ export default function PrayerSidebar({
         const isSyuruq  = prayer === 'Sunrise';
         const iqMins    = iqamahTimes[prayer] ?? 0;
         const countdown = getCountdown(prayer, timeStr, isActive, iqMins, currentTime);
-        const iqStr     = !isSyuruq && iqMins > 0
+        const iqStr     = iqMins > 0
           ? getIqamahTimeStr(timeStr, iqMins, currentTime)
           : null;
 
@@ -160,42 +160,44 @@ export default function PrayerSidebar({
               <span className="text-white/25 text-xs">Adhan</span>
             </div>
 
-            {/* Iqamah column — hidden for Syuruq */}
-            {!isSyuruq && (
-              <div className="flex flex-col items-end" style={{ width: '28%' }}>
-                {countdown ? (
-                  <>
-                    <span
-                      className="font-mono font-bold tabular-nums"
-                      style={{
-                        fontSize: 'clamp(0.75rem, 1.2vw, 1rem)',
-                        color:
-                          countdown.type === 'iqamah' ? '#f59e0b'
-                          : countdown.type === 'adhan'  ? accentColor
-                          : 'rgba(255,255,255,0.50)',
-                      }}
-                    >
-                      {countdown.value}
-                    </span>
+            {/* Iqamah column — Syuruq shows the +offset time without the "Iqamah" label */}
+            <div className="flex flex-col items-end" style={{ width: '28%' }}>
+              {countdown ? (
+                <>
+                  <span
+                    className="font-mono font-bold tabular-nums"
+                    style={{
+                      fontSize: 'clamp(1rem, 1.5vw, 1.35rem)',
+                      color:
+                        countdown.type === 'iqamah' ? '#f59e0b'
+                        : countdown.type === 'adhan'  ? accentColor
+                        : 'rgba(255,255,255,0.50)',
+                    }}
+                  >
+                    {countdown.value}
+                  </span>
+                  {!(isSyuruq && countdown.type !== 'adhan') && (
                     <span className="text-white/25 text-xs">
                       {countdown.type === 'iqamah' ? 'Until Iqamah'
                        : countdown.type === 'adhan'  ? 'Until Adhan'
                        : 'Iqamah'}
                     </span>
-                  </>
-                ) : iqStr ? (
-                  <>
-                    <span
-                      className="font-mono font-medium tabular-nums text-white/55"
-                      style={{ fontSize: 'clamp(0.75rem, 1.2vw, 1rem)' }}
-                    >
-                      {iqStr}
-                    </span>
+                  )}
+                </>
+              ) : iqStr ? (
+                <>
+                  <span
+                    className="font-mono font-medium tabular-nums text-white/55"
+                    style={{ fontSize: 'clamp(1rem, 1.5vw, 1.35rem)' }}
+                  >
+                    {iqStr}
+                  </span>
+                  {!isSyuruq && (
                     <span className="text-white/25 text-xs">Iqamah</span>
-                  </>
-                ) : null}
-              </div>
-            )}
+                  )}
+                </>
+              ) : null}
+            </div>
           </div>
         );
       })}

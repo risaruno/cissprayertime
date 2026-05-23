@@ -5,7 +5,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "predeploy": "vite build",
     "deploy": "gh-pages -d dist --repo https://github.com/risaruno/cissprayertime.git",
     "build": "vite build",

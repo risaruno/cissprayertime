@@ -112,11 +112,12 @@ function App() {
   
   // Iqamah times (minutes after adhan)
   const [iqamahTimes, setIqamahTimes] = useState<{ [key: string]: number }>({
-    'Fajr': 20,
+    'Fajr': 30,
+    'Sunrise': 20,
     'Dhuhr': 30,
     'Asr': 30,
-    'Maghrib': 15,
-    'Isha': 15
+    'Maghrib': 20,
+    'Isha': 30
   });
 
   // format current time - Update less frequently to save resources
