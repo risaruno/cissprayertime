@@ -64,14 +64,14 @@ interface TimeTheme {
 }
 
 const TIME_THEMES: Record<string, TimeTheme> = {
-  night:   { bgColor: '#0a0e1a', accentColor: '#6366f1', accentRgb: '99,102,241'   },
-  fajr:    { bgColor: '#061a14', accentColor: '#10b981', accentRgb: '16,185,129'   },
-  sunrise: { bgColor: '#1a0e06', accentColor: '#f59e0b', accentRgb: '245,158,11'   },
-  dhuha:   { bgColor: '#1a0e06', accentColor: '#f59e0b', accentRgb: '245,158,11'   },
-  dhuhr:   { bgColor: '#0d1117', accentColor: '#3b82f6', accentRgb: '59,130,246'   },
-  asr:     { bgColor: '#0d1117', accentColor: '#3b82f6', accentRgb: '59,130,246'   },
-  maghrib: { bgColor: '#1a0610', accentColor: '#f43f5e', accentRgb: '244,63,94'    },
-  isha:    { bgColor: '#0e0a1a', accentColor: '#8b5cf6', accentRgb: '139,92,246'   },
+  night:   { bgColor: '#0a0e1a', accentColor: '#38bdf8', accentRgb: '56,189,248'   },  // sky blue
+  fajr:    { bgColor: '#061a14', accentColor: '#2dd4bf', accentRgb: '45,212,191'   },  // teal
+  sunrise: { bgColor: '#061219', accentColor: '#22d3ee', accentRgb: '34,211,238'   },  // cyan (was amber)
+  dhuha:   { bgColor: '#071320', accentColor: '#0ea5e9', accentRgb: '14,165,233'   },  // sky  (was amber)
+  dhuhr:   { bgColor: '#0d1117', accentColor: '#3b82f6', accentRgb: '59,130,246'   },  // blue
+  asr:     { bgColor: '#0d1117', accentColor: '#60a5fa', accentRgb: '96,165,250'   },  // lighter blue
+  maghrib: { bgColor: '#0a0f1a', accentColor: '#818cf8', accentRgb: '129,140,248'  },  // indigo (was rose-red)
+  isha:    { bgColor: '#0e0a1a', accentColor: '#a78bfa', accentRgb: '167,139,250'  },  // violet
 };
 
 const WEATHER_API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
@@ -448,13 +448,10 @@ function App() {
   };
 
   return (
-    /* ── Root: dark background with smooth theme transition ─────────────── */
+    /* ── Root: dark background ───────────────────────────────────────────── */
     <div
       className="h-screen flex flex-col overflow-hidden"
-      style={{
-        backgroundColor: timeTheme.bgColor,
-        transition: 'background-color 3s ease-in-out',
-      }}
+      style={{ backgroundColor: timeTheme.bgColor }}
     >
       {/* ── Animated Islamic geometric background ────────────────────────── */}
       <GeometricBackground accentColor={timeTheme.accentColor} />
@@ -512,80 +509,37 @@ function App() {
         </div>
       </div>
 
-      {/* ── Bottom ticker ────────────────────────────────────────────────── */}
+      {/* ── Static bank-account footer ───────────────────────────────────── */}
       <div
-        className="relative z-10 flex-shrink-0 overflow-hidden"
+        className="relative z-10 flex-shrink-0 flex items-center justify-center gap-6 px-6 py-2"
         style={{
           borderTop: `1px solid ${timeTheme.accentColor}40`,
-          backgroundColor: 'rgba(0,0,0,0.35)',
+          backgroundColor: 'rgba(0,0,0,0.40)',
         }}
       >
-        <div className="py-3 overflow-hidden">
-          <div className="animate-scroll-infinite whitespace-nowrap inline-flex items-center will-change-transform">
-            {/* First set */}
-            {QURAN_QUOTES.map((quote, index) => (
-              <div key={`a-${index}`} className="inline-flex items-center flex-shrink-0">
-                <span className="text-white/75 font-serif italic px-8"
-                      style={{ fontSize: 'clamp(0.75rem, 1.3vw, 1rem)' }}>
-                  {quote}
-                </span>
-                <span className="text-white/30 px-4">☪</span>
-                <span
-                  className="inline-flex items-center rounded-full px-5 py-1.5 mx-4"
-                  style={{
-                    background: `linear-gradient(90deg, rgba(245,158,11,0.25), rgba(180,110,0,0.25))`,
-                    border: '1px solid rgba(245,158,11,0.35)',
-                  }}
-                >
-                  <svg className="w-4 h-4 mr-2 text-yellow-300/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                  </svg>
-                  <span className="text-white font-semibold"
-                        style={{ fontSize: 'clamp(0.75rem, 1.2vw, 0.95rem)' }}>
-                    Woori Bank 1005-904-584-084
-                  </span>
-                  <span className="text-yellow-100/70 ml-2"
-                        style={{ fontSize: 'clamp(0.65rem, 1vw, 0.85rem)' }}>
-                    (서울이슬람교육센터)
-                  </span>
-                </span>
-                <span className="text-white/30 px-4">☪</span>
-              </div>
-            ))}
-            {/* Duplicate for seamless loop */}
-            {QURAN_QUOTES.map((quote, index) => (
-              <div key={`b-${index}`} className="inline-flex items-center flex-shrink-0">
-                <span className="text-white/75 font-serif italic px-8"
-                      style={{ fontSize: 'clamp(0.75rem, 1.3vw, 1rem)' }}>
-                  {quote}
-                </span>
-                <span className="text-white/30 px-4">☪</span>
-                <span
-                  className="inline-flex items-center rounded-full px-5 py-1.5 mx-4"
-                  style={{
-                    background: `linear-gradient(90deg, rgba(245,158,11,0.25), rgba(180,110,0,0.25))`,
-                    border: '1px solid rgba(245,158,11,0.35)',
-                  }}
-                >
-                  <svg className="w-4 h-4 mr-2 text-yellow-300/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                  </svg>
-                  <span className="text-white font-semibold"
-                        style={{ fontSize: 'clamp(0.75rem, 1.2vw, 0.95rem)' }}>
-                    Woori Bank 1005-904-584-084
-                  </span>
-                  <span className="text-yellow-100/70 ml-2"
-                        style={{ fontSize: 'clamp(0.65rem, 1vw, 0.85rem)' }}>
-                    (서울이슬람교육센터)
-                  </span>
-                </span>
-                <span className="text-white/30 px-4">☪</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Bank icon */}
+        <svg className="w-5 h-5 flex-shrink-0" style={{ color: '#fbbf24' }}
+             fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+        </svg>
+
+        <span className="text-white/50 text-xs font-medium uppercase tracking-widest">
+          Donasi / Donation
+        </span>
+
+        <span className="text-white font-semibold font-mono"
+              style={{ fontSize: 'clamp(0.85rem, 1.4vw, 1.1rem)' }}>
+          Woori Bank&ensp;1005-904-584-084
+        </span>
+
+        <span className="text-white/50 text-sm">(서울이슬람교육센터)</span>
+
+        <span style={{ color: timeTheme.accentColor + '70' }} className="text-sm">☪</span>
+
+        <span className="text-white/40 text-xs italic">
+          Center of Islamic Studies Seoul
+        </span>
       </div>
 
       {/* ── Performance monitor ──────────────────────────────────────────── */}

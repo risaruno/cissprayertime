@@ -32,12 +32,12 @@ export default function TopBar({
         <img
           src={leftLogo}
           alt="CISS Logo"
-          className="w-11 h-11 rounded-full object-contain bg-white/10 p-1"
+          className="w-12 h-12 rounded-full object-contain bg-white p-1.5 shadow-lg"
         />
         <img
           src={rightLogo}
           alt="Masjid Logo"
-          className="w-11 h-11 rounded-full object-contain bg-white/10 p-1"
+          className="w-12 h-12 rounded-full object-contain bg-white p-1.5 shadow-lg"
         />
         <div className="ml-1">
           <h1 className="font-display font-bold text-white leading-tight"

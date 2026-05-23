@@ -1,4 +1,4 @@
-/* Geometric Sanctuary — design tokens & animations */
+/* Geometric Sanctuary — design tokens */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -15,46 +15,19 @@
   }
 }
 
-/* ─── Scrolling ticker ─────────────────────────────────────────────────────── */
+/* ─── Debug panel fade ──────────────────────────────────────────────────────── */
 @layer utilities {
   .animate-fadeIn {
-    animation: fadeIn 0.3s ease-in-out;
+    animation: fadeIn 0.2s ease-in-out;
   }
 }
 
-@keyframes scroll-infinite {
-  0%   { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(-50%, 0, 0); }
-}
-
 @keyframes fadeIn {
-  0%   { opacity: 0; transform: translateY(-8px); }
+  0%   { opacity: 0; transform: translateY(-6px); }
   100% { opacity: 1; transform: translateY(0); }
 }
 
-/* ─── Background tessellation rotation ─────────────────────────────────────── */
-@keyframes geo-rotate {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
-/* ─── Active prayer sidebar pulse ───────────────────────────────────────────── */
-@keyframes accent-pulse {
-  0%, 100% { opacity: 0.7; }
-  50%       { opacity: 1; }
-}
-
-/* ─── Iqamah countdown pulse ────────────────────────────────────────────────── */
-@keyframes iqamah-pulse {
-  0%, 100% { transform: scale(1); }
-  50%       { transform: scale(1.05); }
-}
-
-.animate-iqamah-pulse {
-  animation: iqamah-pulse 2s ease-in-out infinite;
-}
-
-/* ─── Rain / Snow (WeatherEffects stays unchanged) ──────────────────────────── */
+/* ─── Rain / Snow (WeatherEffects) ──────────────────────────────────────────── */
 @keyframes rain-fall {
   0%   { transform: translateY(-20px); }
   100% { transform: translateY(100vh); }
@@ -65,7 +38,7 @@
   100% { transform: translateY(100vh) translateX(var(--sway, 0px)); }
 }
 
-/* ─── Android TV font smoothing ─────────────────────────────────────────────── */
+/* ─── Font smoothing ─────────────────────────────────────────────────────────── */
 * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

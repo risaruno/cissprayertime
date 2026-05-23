@@ -67,12 +67,6 @@ export default function HeroPanel({
   const hh = zeroPad(currentTime.getHours());
   const mm = zeroPad(currentTime.getMinutes());
   const ss = zeroPad(currentTime.getSeconds());
-  const secondsFraction = currentTime.getSeconds() / 60;
-
-  // SVG seconds-ring
-  const RING_R = 56;
-  const RING_CIRC = 2 * Math.PI * RING_R;
-  const ringOffset = RING_CIRC * (1 - secondsFraction);
 
   /* ── Next-prayer countdown ────────────────────────────────────────────── */
   const countdown = useMemo(() => {
@@ -140,53 +134,24 @@ export default function HeroPanel({
       style={{ width: '60%', padding: 'clamp(12px, 2vw, 28px)' }}
     >
       {/* ── CLOCK SECTION ─────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-5 mb-4 flex-shrink-0">
-        {/* Seconds ring + HH:MM */}
-        <div className="relative flex-shrink-0" style={{ width: 128, height: 128 }}>
-          <svg
-            width="128" height="128"
-            style={{ position: 'absolute', top: 0, left: 0 }}
-          >
-            {/* Track */}
-            <circle cx="64" cy="64" r={RING_R}
-              fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="3" />
-            {/* Progress */}
-            <circle cx="64" cy="64" r={RING_R}
-              fill="none"
-              stroke={accentColor}
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeDasharray={RING_CIRC}
-              strokeDashoffset={ringOffset}
-              transform="rotate(-90 64 64)"
-              style={{ transition: 'stroke-dashoffset 0.35s linear', opacity: 0.75 }}
-            />
-          </svg>
-          <div
-            className="absolute inset-0 flex items-center justify-center"
-          >
-            <span
-              className="font-mono font-bold tabular-nums text-white select-none"
-              style={{
-                fontSize: 'clamp(1.6rem, 2.8vw, 2.2rem)',
-                textShadow: `0 0 18px rgba(${accentRgb},0.45)`,
-              }}
-            >
-              {hh}:{mm}
-            </span>
-          </div>
-        </div>
-
-        {/* Seconds + date hint */}
-        <div className="flex flex-col">
-          <span
-            className="font-mono font-semibold tabular-nums"
-            style={{ color: accentColor, fontSize: 'clamp(1.2rem, 2vw, 1.7rem)' }}
-          >
-            :{ss}
-          </span>
-          <span className="text-white/25 text-xs mt-1">seconds</span>
-        </div>
+      <div className="flex items-baseline gap-2 mb-4 flex-shrink-0">
+        <span
+          className="font-mono font-bold tabular-nums text-white select-none leading-none"
+          style={{
+            fontSize: 'clamp(3rem, 6vw, 5.5rem)',
+          }}
+        >
+          {hh}:{mm}
+        </span>
+        <span
+          className="font-mono font-semibold tabular-nums leading-none"
+          style={{
+            color: accentColor,
+            fontSize: 'clamp(1.5rem, 3vw, 2.8rem)',
+          }}
+        >
+          :{ss}
+        </span>
       </div>
 
       {/* ── NEXT PRAYER BANNER ─────────────────────────────────────────────── */}
@@ -229,7 +194,6 @@ export default function HeroPanel({
                   style={{
                     fontSize: 'clamp(1.2rem, 2vw, 1.8rem)',
                     color: countdown.isIqamah ? '#f59e0b' : accentColor,
-                    textShadow: `0 0 14px rgba(${accentRgb},0.55)`,
                   }}
                 >
                   {countdown.value}

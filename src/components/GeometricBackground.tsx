@@ -63,25 +63,12 @@ export default function GeometricBackground({ accentColor }: GeometricBackground
       className="fixed inset-0 pointer-events-none"
       style={{ zIndex: 0, overflow: 'hidden' }}
     >
-      {/* Oversized rotating wrapper so corners stay covered during spin */}
-      <div
-        style={{
-          position: 'absolute',
-          width: '150%',
-          height: '150%',
-          top: '-25%',
-          left: '-25%',
-          transformOrigin: '50% 50%',
-          animation: 'geo-rotate 120s linear infinite',
-          willChange: 'transform',
-        }}
+      <svg
+        width="100%"
+        height="100%"
+        xmlns="http://www.w3.org/2000/svg"
+        style={{ display: 'block', position: 'absolute', inset: 0 }}
       >
-        <svg
-          width="100%"
-          height="100%"
-          xmlns="http://www.w3.org/2000/svg"
-          style={{ display: 'block' }}
-        >
           <defs>
             <pattern
               id="islamic-geo"
@@ -124,8 +111,7 @@ export default function GeometricBackground({ accentColor }: GeometricBackground
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#islamic-geo)" />
-        </svg>
-      </div>
+      </svg>
     </div>
   );
 }

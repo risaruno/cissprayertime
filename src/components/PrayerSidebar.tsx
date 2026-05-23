@@ -123,20 +123,8 @@ export default function PrayerSidebar({
               background: isActive
                 ? `linear-gradient(90deg, rgba(${accentRgb},0.13) 0%, transparent 70%)`
                 : 'transparent',
-              transition: 'background 1.5s ease, border-color 1.5s ease',
             }}
           >
-            {/* Pulsing accent bar on active card */}
-            {isActive && (
-              <div
-                className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full"
-                style={{
-                  backgroundColor: accentColor,
-                  boxShadow: `0 0 8px ${accentColor}`,
-                  animation: 'accent-pulse 2s ease-in-out infinite',
-                }}
-              />
-            )}
 
             {/* Prayer name (Arabic + Latin) */}
             <div className="flex flex-col min-w-0" style={{ width: '35%' }}>
@@ -185,10 +173,6 @@ export default function PrayerSidebar({
                           countdown.type === 'iqamah' ? '#f59e0b'
                           : countdown.type === 'adhan'  ? accentColor
                           : 'rgba(255,255,255,0.50)',
-                        animation:
-                          countdown.type === 'iqamah'
-                            ? 'accent-pulse 2s ease-in-out infinite'
-                            : 'none',
                       }}
                     >
                       {countdown.value}
