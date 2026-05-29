@@ -10,27 +10,6 @@ import PrayerSidebar from './components/PrayerSidebar';
 import LeftLogo from './assets/logo/left.png';
 import RightLogo from './assets/logo/right.png';
 
-// Import weather icons (only files that exist: 01-09)
-import weather01d from './assets/weather/01d.png';
-import weather01n from './assets/weather/01n.png';
-import weather02d from './assets/weather/02d.png';
-import weather02n from './assets/weather/02n.png';
-import weather03d from './assets/weather/03d.png';
-import weather03n from './assets/weather/03n.png';
-import weather04d from './assets/weather/04d.png';
-import weather04n from './assets/weather/04n.png';
-import weather05d from './assets/weather/05d.png';
-import weather05n from './assets/weather/05n.png';
-import weather06d from './assets/weather/06d.png';
-import weather06n from './assets/weather/06n.png';
-import weather07d from './assets/weather/07d.png';
-import weather07n from './assets/weather/07n.png';
-import weather08d from './assets/weather/08d.png';
-import weather08n from './assets/weather/08n.png';
-import weather09d from './assets/weather/09d.png';
-import weather09n from './assets/weather/09n.png';
-import weatherDefault from './assets/weather/Default.png';
-
 interface PrayerTimes {
   Fajr: string;
   Sunrise: string;
@@ -41,14 +20,7 @@ interface PrayerTimes {
 }
 
 interface WeatherData {
-  temp: number;
-  description: string;
-  icon: string;
-  location: string;
   main: string;
-  moonPhase?: number; // 0-1, where 0/1 = new moon, 0.5 = full moon
-  latitude?: number;
-  longitude?: number;
 }
 
 interface CalendarData {
@@ -75,20 +47,12 @@ const TIME_THEMES: Record<string, TimeTheme> = {
 };
 
 const WEATHER_API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
+const HAS_WEATHER_API_KEY = Boolean(
+  WEATHER_API_KEY &&
+  WEATHER_API_KEY.trim() !== '' &&
+  WEATHER_API_KEY !== 'your_weather_api_key'
+);
 const DEBUG_MODE = import.meta.env.VITE_DEBUG === 'true';
-
-const QURAN_QUOTES = [
-  '"Indeed, Allah is with those who are patient." - Quran 2:153',
-  '"And He found you lost and guided [you]." - Quran 93:7',
-  '"So verily, with the hardship, there is relief." - Quran 94:5',
-  '"Indeed, with hardship [will be] ease." - Quran 94:6',
-  '"And whoever relies upon Allah - then He is sufficient for him." - Quran 65:3',
-  '"Indeed, Allah does not burden a soul beyond that it can bear." - Quran 2:286',
-  '"And He is with you wherever you are." - Quran 57:4',
-  '"Remember Me; I will remember you." - Quran 2:152',
-  '"Indeed, my Lord is near and responsive." - Quran 11:61',
-  '"Allah is the best of planners." - Quran 8:30',
-];
 
 function App() {
   const [location, setLocation] = useState('Seoul');
@@ -137,87 +101,37 @@ function App() {
   }, [debugTimeOffset]);
   
 
-  // Fetch weather data
+  // Fetch weather condition for ambient effects
   const fetchWeather = useCallback(async (city: string) => {
+    if (!HAS_WEATHER_API_KEY) {
+      setWeather(null);
+      console.warn('Skipping weather fetch: VITE_WEATHER_API_KEY is missing or still using the example placeholder.');
+      return;
+    }
+
     try {
       const response = await fetch(
         `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${WEATHER_API_KEY}&units=metric`
       );
       const data = await response.json();
-      
-      if (data.cod === 200) {
-        // Get moon phase from One Call API
-        let moonPhase = undefined;
-        try {
-          const oneCallResponse = await fetch(
-            `https://api.openweathermap.org/data/3.0/onecall?lat=${data.coord.lat}&lon=${data.coord.lon}&appid=${WEATHER_API_KEY}&exclude=minutely,hourly,alerts`
-          );
-          const oneCallData = await oneCallResponse.json();
-          if (oneCallData.daily && oneCallData.daily[0]) {
-            moonPhase = oneCallData.daily[0].moon_phase;
-          }
-        } catch (moonErr) {
-          console.error('Error fetching moon phase:', moonErr);
-        }
-        
-        setWeather({
-          temp: Math.round(data.main.temp),
-          description: data.weather[0].main,
-          icon: data.weather[0].icon,
-          location: data.name,
-          main: data.weather[0].main,
-          moonPhase,
-          latitude: data.coord.lat,
-          longitude: data.coord.lon
-        });
+
+      if (!response.ok || data.cod !== 200) {
+        console.warn('Weather API request failed:', data?.message || response.statusText);
+        setWeather(null);
+        return;
       }
+
+      setWeather({
+        main: data.weather[0].main,
+      });
     } catch (err) {
       console.error('Error fetching weather:', err);
+      setWeather(null);
     }
-  }, []);
-
-  // Fetch prayer times
-  const fetchPrayerTimes = useCallback(async (city: string) => {
-    setLoading(true);
-    try {
-      const date = new Date();
-      const dateString = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-      
-      const response = await fetch(
-        `https://api.aladhan.com/v1/timingsByCity/${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}?city=${city}&country=&method=3`
-      );
-      const data = await response.json();
-      
-      if (data.code === 200) {
-        const filteredTimings: PrayerTimes = {
-          Fajr: data.data.timings.Fajr,
-          Sunrise: data.data.timings.Sunrise,
-          Dhuhr: data.data.timings.Dhuhr,
-          Asr: data.data.timings.Asr,
-          Maghrib: data.data.timings.Maghrib,
-          Isha: data.data.timings.Isha,
-        };
-        
-        setPrayerTimes(filteredTimings);
-        updateNextPrayer(filteredTimings);
-        
-        // Set calendar data
-        setCalendar({
-          hijri: `${data.data.date.hijri.day} ${data.data.date.hijri.month.en} ${data.data.date.hijri.year} H`,
-          gregorian: `${data.data.date.gregorian.weekday.en}, ${data.data.date.gregorian.day} ${data.data.date.gregorian.month.en} ${data.data.date.gregorian.year}`
-        });
-        
-        // Update last fetch date
-        setLastFetchDate(dateString);
-      }
-    } catch (err) {
-      console.error('Error fetching prayer times:', err);
-    }
-    setLoading(false);
   }, []);
 
   // Update current and next prayer
-  const updateNextPrayer = (times: PrayerTimes, currentTimeParam?: Date) => {
+  const updateNextPrayer = useCallback((times: PrayerTimes, currentTimeParam?: Date) => {
     const now = currentTimeParam || new Date();
     // Exclude Sunrise from next prayer calculation (it's not a prayer time)
     const prayers = Object.entries(times).filter(([name]) => name !== 'Sunrise');
@@ -264,7 +178,47 @@ function App() {
       };
       setCurrentPrayer(yesterdayPrayer);
     }
-  };
+  }, [iqamahTimes]);
+
+  // Fetch prayer times
+  const fetchPrayerTimes = useCallback(async (city: string) => {
+    setLoading(true);
+    try {
+      const date = new Date();
+      const dateString = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+      
+      const response = await fetch(
+        `https://api.aladhan.com/v1/timingsByCity/${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}?city=${city}&country=&method=3`
+      );
+      const data = await response.json();
+      
+      if (data.code === 200) {
+        const filteredTimings: PrayerTimes = {
+          Fajr: data.data.timings.Fajr,
+          Sunrise: data.data.timings.Sunrise,
+          Dhuhr: data.data.timings.Dhuhr,
+          Asr: data.data.timings.Asr,
+          Maghrib: data.data.timings.Maghrib,
+          Isha: data.data.timings.Isha,
+        };
+        
+        setPrayerTimes(filteredTimings);
+        updateNextPrayer(filteredTimings);
+        
+        // Set calendar data
+        setCalendar({
+          hijri: `${data.data.date.hijri.day} ${data.data.date.hijri.month.en} ${data.data.date.hijri.year} H`,
+          gregorian: `${data.data.date.gregorian.weekday.en}, ${data.data.date.gregorian.day} ${data.data.date.gregorian.month.en} ${data.data.date.gregorian.year}`
+        });
+        
+        // Update last fetch date
+        setLastFetchDate(dateString);
+      }
+    } catch (err) {
+      console.error('Error fetching prayer times:', err);
+    }
+    setLoading(false);
+  }, [updateNextPrayer]);
 
   // Determine time-of-day theme based on prayer times
   const updateBackground = useCallback((times: PrayerTimes | null, currentTimeParam?: Date) => {
@@ -358,7 +312,7 @@ function App() {
       updateNextPrayer(prayerTimes, currentTime);
       updateBackground(prayerTimes, currentTime);
     }
-  }, [currentTime, prayerTimes, iqamahTimes, updateBackground]);
+  }, [currentTime, prayerTimes, updateNextPrayer, updateBackground]);
 
   // Auto-refresh prayer times daily at midnight for Smart TVs
   useEffect(() => {
@@ -394,60 +348,6 @@ function App() {
     return nameMap[name] || name;
   };
 
-  // Get weather icon from imported assets
-  // Map OpenWeather icon codes to our available assets (01-09)
-  const getWeatherIcon = (iconCode: string) => {
-    const iconMap: { [key: string]: string } = {
-      '01d': weather01d,  // clear sky day
-      '01n': weather01n,  // clear sky night
-      '02d': weather02d,  // few clouds day
-      '02n': weather02n,  // few clouds night
-      '03d': weather03d,  // scattered clouds day
-      '03n': weather03n,  // scattered clouds night
-      '04d': weather04d,  // broken clouds day
-      '04n': weather04n,  // broken clouds night
-      '05d': weather05d,  // custom icon
-      '05n': weather05n,  // custom icon
-      '06d': weather06d,  // custom icon
-      '06n': weather06n,  // custom icon
-      '07d': weather07d,  // custom icon
-      '07n': weather07n,  // custom icon
-      '08d': weather08d,  // custom icon
-      '08n': weather08n,  // custom icon
-      '09d': weather09d,  // shower rain day
-      '09n': weather09n,  // shower rain night
-      // Map OpenWeather codes that don't have direct assets
-      '10d': weather09d,  // rain -> use shower icon
-      '10n': weather09n,  // rain night
-      '11d': weather09d,  // thunderstorm -> use rain icon
-      '11n': weather09n,  // thunderstorm night
-      '13d': weather08d,  // snow -> use icon 08
-      '13n': weather08n,  // snow night
-      '50d': weather07d,  // mist/fog -> use icon 07
-      '50n': weather07n,  // mist/fog night
-    };
-    return iconMap[iconCode] || weatherDefault;
-  };
-
-  // Determine if it's daytime based on prayer times
-  const isDaytime = () => {
-    if (!prayerTimes) return true; // Default to day
-
-    const now = currentTime;
-    const currentTimeInMinutes = now.getHours() * 60 + now.getMinutes();
-
-    const parseTime = (time: string) => {
-      const [hours, minutes] = time.split(':').map(Number);
-      return hours * 60 + minutes;
-    };
-
-    const sunrise = parseTime(prayerTimes.Sunrise);
-    const maghrib = parseTime(prayerTimes.Maghrib);
-
-    // Daytime is from Sunrise to Maghrib
-    return currentTimeInMinutes >= sunrise && currentTimeInMinutes < maghrib;
-  };
-
   return (
     /* ── Root: dark background ───────────────────────────────────────────── */
     <div
@@ -480,14 +380,9 @@ function App() {
           nextPrayer={nextPrayer}
           prayerTimes={prayerTimes}
           iqamahTimes={iqamahTimes}
-          weather={weather}
-          isDaytime={isDaytime()}
           displayPrayerName={displayPrayerName}
-          getWeatherIcon={getWeatherIcon}
-          quotes={QURAN_QUOTES}
           accentColor={timeTheme.accentColor}
           accentRgb={timeTheme.accentRgb}
-          location={location}
         />
 
         {/* Prayer sidebar — only rendered once prayer times are loaded */}

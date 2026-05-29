@@ -1,4 +1,4 @@
-import { useMoonPhase } from './MoonPhaseFetcher';
+import { useMoonPhase } from './useMoonPhase';
 
 const DEFAULT_LAT = 37.5665;
 const DEFAULT_LON = 126.9780;
