@@ -1,4 +1,4 @@
-import { useMoonPhase } from './MoonPhaseFetcher';
+import { useMoonPhase } from './useMoonPhase';
 
 // Default location: Seoul, South Korea
 const DEFAULT_LATITUDE = 37.5665;

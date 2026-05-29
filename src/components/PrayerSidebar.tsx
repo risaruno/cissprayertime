@@ -105,13 +105,8 @@ export default function PrayerSidebar({
           ? getIqamahTimeStr(timeStr, iqMins, currentTime)
           : null;
 
-        const nameColor = isSyuruq
-          ? '#fbbf24'
-          : isActive ? accentColor : 'rgba(255,255,255,0.88)';
-
-        const subColor = isSyuruq
-          ? 'rgba(251,191,36,0.65)'
-          : isActive ? `${accentColor}bb` : 'rgba(255,255,255,0.40)';
+        const nameColor = 'rgba(255,255,255,0.98)';
+        const subColor = 'rgba(255,255,255,0.92)';
 
         return (
           <div
@@ -126,23 +121,27 @@ export default function PrayerSidebar({
             }}
           >
 
-            {/* Prayer name (Arabic + Latin) */}
-            <div className="flex flex-col min-w-0" style={{ width: '35%' }}>
+            {/* Prayer name (Latin + Arabic) */}
+            <div className="flex items-center justify-between gap-3 min-w-0" style={{ width: '35%' }}>
               <span
-                className="font-serif leading-tight"
+                className="font-bold leading-none uppercase text-left truncate"
+                style={{
+                  color: subColor,
+                  fontSize: 'clamp(0.98rem, 1.18vw, 1.12rem)',
+                  letterSpacing: '0.06em',
+                }}
+              >
+                {displayPrayerName(prayer)}
+              </span>
+              <span
+                className="font-serif font-bold leading-none text-right flex-shrink-0"
                 dir="rtl"
                 style={{
                   color: nameColor,
-                  fontSize: 'clamp(0.85rem, 1.3vw, 1.15rem)',
+                  fontSize: 'clamp(1.18rem, 1.85vw, 1.6rem)',
                 }}
               >
                 {ARABIC_NAMES[prayer]}
-              </span>
-              <span
-                className="text-xs font-medium mt-0.5"
-                style={{ color: subColor }}
-              >
-                {displayPrayerName(prayer)}
               </span>
             </div>
 
@@ -152,12 +151,12 @@ export default function PrayerSidebar({
                 className="font-mono font-semibold tabular-nums"
                 style={{
                   color: isActive ? accentColor : 'rgba(255,255,255,0.82)',
-                  fontSize: 'clamp(1rem, 1.6vw, 1.4rem)',
+                  fontSize: 'clamp(1.18rem, 1.95vw, 1.7rem)',
                 }}
               >
                 {timeStr}
               </span>
-              <span className="text-white/25 text-xs">Adhan</span>
+              <span className="text-white/25" style={{ fontSize: 'clamp(0.78rem, 0.9vw, 0.92rem)' }}>Adhan</span>
             </div>
 
             {/* Iqamah column — Syuruq shows the +offset time without the "Iqamah" label */}
@@ -167,7 +166,7 @@ export default function PrayerSidebar({
                   <span
                     className="font-mono font-bold tabular-nums"
                     style={{
-                      fontSize: 'clamp(1rem, 1.5vw, 1.35rem)',
+                      fontSize: 'clamp(1.08rem, 1.75vw, 1.55rem)',
                       color:
                         countdown.type === 'iqamah' ? '#f59e0b'
                         : countdown.type === 'adhan'  ? accentColor
@@ -177,7 +176,7 @@ export default function PrayerSidebar({
                     {countdown.value}
                   </span>
                   {!(isSyuruq && countdown.type !== 'adhan') && (
-                    <span className="text-white/25 text-xs">
+                    <span className="text-white/25" style={{ fontSize: 'clamp(0.76rem, 0.88vw, 0.9rem)' }}>
                       {countdown.type === 'iqamah' ? 'Until Iqamah'
                        : countdown.type === 'adhan'  ? 'Until Adhan'
                        : 'Iqamah'}
@@ -188,12 +187,12 @@ export default function PrayerSidebar({
                 <>
                   <span
                     className="font-mono font-medium tabular-nums text-white/55"
-                    style={{ fontSize: 'clamp(1rem, 1.5vw, 1.35rem)' }}
+                    style={{ fontSize: 'clamp(1.08rem, 1.75vw, 1.55rem)' }}
                   >
                     {iqStr}
                   </span>
                   {!isSyuruq && (
-                    <span className="text-white/25 text-xs">Iqamah</span>
+                    <span className="text-white/25" style={{ fontSize: 'clamp(0.76rem, 0.88vw, 0.9rem)' }}>Iqamah</span>
                   )}
                 </>
               ) : null}

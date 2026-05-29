@@ -1,26 +1,13 @@
 import { useMemo } from 'react';
-import { MapPin } from 'lucide-react';
-import CelestialArc from './CelestialArc';
 import RotatingVerse from './RotatingVerse';
 
 interface PrayerTimes {
-  Fajr:    string;
+  Fajr: string;
   Sunrise: string;
-  Dhuhr:   string;
-  Asr:     string;
+  Dhuhr: string;
+  Asr: string;
   Maghrib: string;
-  Isha:    string;
-}
-
-interface WeatherData {
-  temp: number;
-  description: string;
-  icon: string;
-  location: string;
-  main: string;
-  moonPhase?: number;
-  latitude?: number;
-  longitude?: number;
+  Isha: string;
 }
 
 interface HeroPanelProps {
@@ -28,14 +15,9 @@ interface HeroPanelProps {
   nextPrayer: { name: string; time: Date } | null;
   prayerTimes: PrayerTimes | null;
   iqamahTimes: Record<string, number>;
-  weather: WeatherData | null;
-  isDaytime: boolean;
   displayPrayerName: (name: string) => string;
-  getWeatherIcon: (iconCode: string) => string;
-  quotes: string[];
   accentColor: string;
   accentRgb: string;
-  location: string;
 }
 
 function zeroPad(n: number) {
@@ -54,21 +36,14 @@ export default function HeroPanel({
   nextPrayer,
   prayerTimes,
   iqamahTimes,
-  weather,
-  isDaytime,
   displayPrayerName,
-  getWeatherIcon,
-  quotes,
   accentColor,
   accentRgb,
-  location,
 }: HeroPanelProps) {
-  /* ── Clock display ────────────────────────────────────────────────────── */
   const hh = zeroPad(currentTime.getHours());
   const mm = zeroPad(currentTime.getMinutes());
   const ss = zeroPad(currentTime.getSeconds());
 
-  /* ── Next-prayer countdown ────────────────────────────────────────────── */
   const countdown = useMemo(() => {
     if (!nextPrayer) return null;
     const diff = nextPrayer.time.getTime() - currentTime.getTime();
@@ -77,23 +52,23 @@ export default function HeroPanel({
       return { value: msToClock(diff), label: 'Until Adhan', isIqamah: false };
     }
 
-    // Past adhan → iqamah countdown
     const iqMins = iqamahTimes[nextPrayer.name] ?? 0;
     const iqTime = new Date(nextPrayer.time.getTime() + iqMins * 60_000);
     const iqDiff = iqTime.getTime() - currentTime.getTime();
     if (iqDiff > 0) {
       return { value: msToClock(iqDiff), label: 'Until Iqamah', isIqamah: true };
     }
+
     return null;
   }, [nextPrayer, currentTime, iqamahTimes]);
 
-  /* ── Iqamah time string for banner subtitle ───────────────────────────── */
   const iqamahTimeStr = useMemo(() => {
     if (!nextPrayer || !prayerTimes) return null;
     const t = prayerTimes[nextPrayer.name as keyof PrayerTimes];
     if (!t) return null;
     const iqMins = iqamahTimes[nextPrayer.name] ?? 0;
     if (!iqMins) return null;
+
     const [h, m] = t.split(':').map(Number);
     const adhan = new Date(currentTime);
     adhan.setHours(h, m, 0, 0);
@@ -101,45 +76,15 @@ export default function HeroPanel({
     return `${zeroPad(iq.getHours())}:${zeroPad(iq.getMinutes())}`;
   }, [nextPrayer, prayerTimes, iqamahTimes, currentTime]);
 
-  /* ── Celestial-arc progress ───────────────────────────────────────────── */
-  const celestialProgress = useMemo(() => {
-    if (!prayerTimes) return 0.5;
-
-    const parseMs = (t: string) => {
-      const [h, m] = t.split(':').map(Number);
-      const d = new Date(currentTime);
-      d.setHours(h, m, 0, 0);
-      return d.getTime();
-    };
-
-    const nowMs     = currentTime.getTime();
-    const sunriseMs = parseMs(prayerTimes.Sunrise);
-    const maghribMs = parseMs(prayerTimes.Maghrib);
-
-    if (isDaytime) {
-      return Math.max(0.01, Math.min(0.99, (nowMs - sunriseMs) / (maghribMs - sunriseMs)));
-    }
-
-    // Night: maghrib → next sunrise
-    let nextSunriseMs = sunriseMs;
-    if (nextSunriseMs <= nowMs) nextSunriseMs += 24 * 3_600_000;
-    const nightSpan = nextSunriseMs - maghribMs;
-    const elapsed   = nowMs < maghribMs ? 0 : nowMs - maghribMs;
-    return Math.max(0.01, Math.min(0.99, elapsed / nightSpan));
-  }, [prayerTimes, currentTime, isDaytime]);
-
   return (
     <div
       className="flex flex-col h-full overflow-hidden"
       style={{ width: '60%', padding: 'clamp(12px, 2vw, 28px)' }}
     >
-      {/* ── CLOCK SECTION ─────────────────────────────────────────────────── */}
       <div className="flex items-baseline gap-2 mb-4 flex-shrink-0">
         <span
           className="font-mono font-bold tabular-nums text-white select-none leading-none"
-          style={{
-            fontSize: 'clamp(3rem, 6vw, 5.5rem)',
-          }}
+          style={{ fontSize: 'clamp(3rem, 6vw, 5.5rem)' }}
         >
           {hh}:{mm}
         </span>
@@ -154,7 +99,6 @@ export default function HeroPanel({
         </span>
       </div>
 
-      {/* ── NEXT PRAYER BANNER ─────────────────────────────────────────────── */}
       {nextPrayer && (
         <div
           className="rounded-xl flex-shrink-0 mb-4"
@@ -204,53 +148,11 @@ export default function HeroPanel({
         </div>
       )}
 
-      {/* ── CELESTIAL ARC ──────────────────────────────────────────────────── */}
       {prayerTimes && (
-        <div className="flex-1 flex items-end min-h-0">
-          <div className="w-full">
-            <CelestialArc
-              isDaytime={isDaytime}
-              progress={celestialProgress}
-              moonPhase={weather?.moonPhase}
-              latitude={weather?.latitude}
-              longitude={weather?.longitude}
-            />
-          </div>
+        <div className="flex-1 min-h-0 mt-2">
+          <RotatingVerse />
         </div>
       )}
-
-      {/* ── BOTTOM ROW: weather + verse ────────────────────────────────────── */}
-      <div className="flex items-start gap-4 mt-3 flex-shrink-0">
-        {/* Weather widget */}
-        {weather && (
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <img
-              src={getWeatherIcon(weather.icon)}
-              alt={weather.description}
-              className="object-contain"
-              style={{ width: 44, height: 44 }}
-            />
-            <div>
-              <p className="text-white font-semibold leading-none"
-                 style={{ fontSize: 'clamp(1rem, 1.6vw, 1.3rem)' }}>
-                {weather.temp}°C
-              </p>
-              <p className="text-white/45 text-xs capitalize mt-0.5">
-                {weather.description}
-              </p>
-              <div className="flex items-center gap-1 mt-0.5">
-                <MapPin className="w-3 h-3 text-white/30" />
-                <span className="text-white/30 text-xs">{location}</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Rotating Quran verse */}
-        <div className="flex-1 min-w-0">
-          <RotatingVerse quotes={quotes} />
-        </div>
-      </div>
     </div>
   );
 }
