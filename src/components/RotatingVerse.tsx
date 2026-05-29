@@ -10,7 +10,7 @@ interface HadithEntry {
 const HADITH_COLLECTION = 'riyadussalihin';
 const HADITH_API_URL = `https://api.islamic.app/v1/hadith/random/${HADITH_COLLECTION}`;
 const ROTATION_MS = 60_000;
-const MAX_WORDS = 100;
+const MAX_WORDS = 45;
 const MAX_FETCH_ATTEMPTS = 20;
 const DONATION_EVERY = 3;
 
@@ -135,7 +135,7 @@ export default function RotatingVerse() {
   return (
     <div className="h-full flex items-center justify-center">
       <div
-        className="relative w-full h-full rounded-2xl flex flex-col justify-center text-center px-6 py-6 md:px-10 md:py-8"
+        className="relative w-full h-full rounded-2xl flex flex-col justify-center text-center p-4"
         style={{
           border: '1px solid rgba(255,255,255,0.10)',
           background: 'rgba(255,255,255,0.02)',
@@ -184,7 +184,7 @@ export default function RotatingVerse() {
               className="text-white/88 font-medium leading-relaxed"
               style={{
                 fontFamily: 'Inter, system-ui, sans-serif',
-                fontSize: 'clamp(1.05rem, 1.9vw, 1.55rem)',
+                fontSize: '0.75rem',
                 display: '-webkit-box',
                 WebkitBoxOrient: 'vertical',
                 WebkitLineClamp: 9,

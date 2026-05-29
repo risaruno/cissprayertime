@@ -127,7 +127,7 @@ export default function PrayerSidebar({
                 className="font-bold leading-none uppercase text-left truncate"
                 style={{
                   color: subColor,
-                  fontSize: 'clamp(0.98rem, 1.18vw, 1.12rem)',
+                  fontSize: '0.875rem',
                   letterSpacing: '0.06em',
                 }}
               >
@@ -138,7 +138,7 @@ export default function PrayerSidebar({
                 dir="rtl"
                 style={{
                   color: nameColor,
-                  fontSize: 'clamp(1.18rem, 1.85vw, 1.6rem)',
+                  fontSize: '0.875rem',
                 }}
               >
                 {ARABIC_NAMES[prayer]}

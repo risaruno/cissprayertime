@@ -118,7 +118,7 @@ export default function HeroPanel({
                 className="font-display font-bold leading-tight"
                 style={{
                   color: accentColor,
-                  fontSize: 'clamp(1.3rem, 2.2vw, 2rem)',
+                  fontSize: '0.875rem',
                 }}
               >
                 {displayPrayerName(nextPrayer.name)}
