@@ -17,15 +17,6 @@ interface PrayerSidebarProps {
   accentRgb: string;
 }
 
-const ARABIC_NAMES: Record<string, string> = {
-  Fajr:    'الفجر',
-  Sunrise: 'الشروق',
-  Dhuhr:   'الظهر',
-  Asr:     'العصر',
-  Maghrib: 'المغرب',
-  Isha:    'العشاء',
-};
-
 function zeroPad(n: number) {
   return n.toString().padStart(2, '0');
 }
@@ -105,7 +96,6 @@ export default function PrayerSidebar({
           ? getIqamahTimeStr(timeStr, iqMins, currentTime)
           : null;
 
-        const nameColor = 'rgba(255,255,255,0.98)';
         const subColor = 'rgba(255,255,255,0.92)';
 
         return (
@@ -121,27 +111,17 @@ export default function PrayerSidebar({
             }}
           >
 
-            {/* Prayer name (Latin + Arabic) */}
-            <div className="flex items-center justify-between gap-3 min-w-0" style={{ width: '35%' }}>
+            {/* Prayer name (Latin) */}
+            <div className="flex items-center min-w-0" style={{ width: '35%' }}>
               <span
                 className="font-bold leading-none uppercase text-left truncate"
                 style={{
                   color: subColor,
-                  fontSize: '0.875rem',
+                  fontSize: '16px',
                   letterSpacing: '0.06em',
                 }}
               >
                 {displayPrayerName(prayer)}
-              </span>
-              <span
-                className="font-serif font-bold leading-none text-right flex-shrink-0"
-                dir="rtl"
-                style={{
-                  color: nameColor,
-                  fontSize: '0.875rem',
-                }}
-              >
-                {ARABIC_NAMES[prayer]}
               </span>
             </div>
 
