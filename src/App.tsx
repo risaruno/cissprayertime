@@ -69,7 +69,6 @@ function App() {
   const [debugTimeOffset, setDebugTimeOffset] = useState<number>(0); // Offset in milliseconds from real time (0 = real time)
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [showIqamahPanel, setShowIqamahPanel] = useState(false);
-  const [iqamahTooltipDelay, setIqamahTooltipDelay] = useState<number>(0);
 
   // Debug: Weather effects override
   const [debugWeatherEffect, setDebugWeatherEffect] = useState<string | null>(null); // 'Rain', 'Snow', or null for actual weather
@@ -461,7 +460,7 @@ function App() {
                 <div className="bg-purple-900/30 p-2 rounded border border-purple-500/30">
                   <div className="text-xs text-purple-300 mb-1">Current Time:</div>
                   <div className="text-lg font-bold text-white">
-                    {currentTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false })}
+                    {currentTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: false })}
                   </div>
                   <div className="text-xs text-white/70">
                     {currentTime.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
@@ -473,19 +472,38 @@ function App() {
                   )}
                 </div>
                 <div>
-                  <label className="text-xs text-white/70 block mb-1">Set Debug Time (continues counting):</label>
-                  <input
-                    type="time"
-                    className="w-full bg-gray-800 text-white px-3 py-2 rounded border border-purple-500/50 focus:border-purple-400 focus:outline-none"
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        const [hours, minutes] = e.target.value.split(':');
-                        const targetTime = new Date();
-                        targetTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-                        setDebugTimeOffset(targetTime.getTime() - Date.now());
-                      }
-                    }}
-                  />
+                  <label className="text-xs text-white/70 block mb-1">Set Debug Time (hh:mm:ss):</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="time"
+                      className="flex-1 bg-gray-800 text-white px-3 py-2 rounded border border-purple-500/50 focus:border-purple-400 focus:outline-none"
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const [hours, minutes] = e.target.value.split(':');
+                          const targetTime = new Date();
+                          targetTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+                          setDebugTimeOffset(targetTime.getTime() - Date.now());
+                        }
+                      }}
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      max="59"
+                      placeholder="ss"
+                      className="w-16 bg-gray-800 text-white px-2 py-2 rounded border border-purple-500/50 focus:border-purple-400 focus:outline-none text-center"
+                      onChange={(e) => {
+                        const s = parseInt(e.target.value) || 0;
+                        setDebugTimeOffset((prev) => {
+                          const realNow = Date.now();
+                          const currentDebug = realNow + prev;
+                          const d = new Date(currentDebug);
+                          d.setSeconds(s, 0);
+                          return d.getTime() - realNow;
+                        });
+                      }}
+                    />
+                  </div>
                   <div className="text-xs text-white/50 mt-1">Clock will continue running from set time</div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -502,6 +520,31 @@ function App() {
                       {label as string}
                     </button>
                   ))}
+                </div>
+                <div>
+                  <label className="text-xs text-green-400 block mb-1">🔊 Jump 2s before Iqamah:</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].map((prayer) => {
+                      const timeStr = prayerTimes?.[prayer as keyof typeof prayerTimes];
+                      if (!timeStr) return null;
+                      const [h, m] = timeStr.split(':').map(Number);
+                      const adhanMs = new Date();
+                      adhanMs.setHours(h, m, 0, 0);
+                      const iqMs = adhanMs.getTime() + (iqamahTimes[prayer] || 0) * 60_000;
+                      const targetMs = iqMs - 2000; // 2 seconds before iqamah
+                      return (
+                        <button
+                          key={`iq-${prayer}`}
+                          onClick={() => {
+                            setDebugTimeOffset(targetMs - Date.now());
+                          }}
+                          className="bg-green-700 hover:bg-green-600 px-3 py-2 rounded text-xs transition-colors"
+                        >
+                          {displayPrayerName(prayer)} 🔊
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
                 <button
                   onClick={() => setDebugTimeOffset(0)}
@@ -582,32 +625,7 @@ function App() {
                     </div>
                   ))}
                 </div>
-                <div className="border-t border-orange-500/20 pt-3 mt-3">
-                  <label className="text-xs text-orange-200 block mb-2">
-                    <strong>Show Iqamah Tooltip After:</strong><br />
-                    <span className="text-white/60">(minutes after adhan to display orange countdown)</span>
-                  </label>
-                  <div className="flex items-center justify-between bg-gray-800/50 p-2 rounded">
-                    <button
-                      onClick={() => setIqamahTooltipDelay(Math.max(0, iqamahTooltipDelay - 1))}
-                      className="bg-orange-700 hover:bg-orange-800 px-3 py-1 rounded text-sm transition-colors"
-                    >-</button>
-                    <input
-                      type="number" min="0" max="30"
-                      value={iqamahTooltipDelay}
-                      onChange={(e) => setIqamahTooltipDelay(parseInt(e.target.value) || 0)}
-                      className="w-20 bg-gray-800 text-white px-2 py-1 rounded border border-orange-500/50 focus:border-orange-400 focus:outline-none text-center text-sm"
-                    />
-                    <button
-                      onClick={() => setIqamahTooltipDelay(Math.min(30, iqamahTooltipDelay + 1))}
-                      className="bg-orange-700 hover:bg-orange-800 px-3 py-1 rounded text-sm transition-colors"
-                    >+</button>
-                    <span className="text-xs text-white/70 ml-2">min</span>
-                  </div>
-                  <div className="text-xs text-orange-300/70 mt-2 p-2 bg-orange-900/20 rounded">
-                    💡 Set to 0 to show immediately after adhan
-                  </div>
-                </div>
+
               </div>
             </div>
           )}
