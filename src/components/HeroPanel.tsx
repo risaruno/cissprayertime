@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
 import RotatingVerse from './RotatingVerse';
 
 interface PrayerTimes {
@@ -31,6 +31,27 @@ function msToClock(ms: number) {
   return `${zeroPad(h)}:${zeroPad(m)}:${zeroPad(s)}`;
 }
 
+function playBeep(ctx: AudioContext) {
+  const now = ctx.currentTime;
+  const beepMs = 0.18;   // 180 ms each beep
+  const gapMs = 0.18;    // 180 ms gap
+  const count = 3;
+
+  for (let i = 0; i < count; i++) {
+    const t0 = now + i * (beepMs + gapMs);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.3, t0);
+    gain.gain.setValueAtTime(0, t0 + beepMs);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + beepMs + 0.01);
+  }
+}
+
 export default function HeroPanel({
   currentTime,
   nextPrayer,
@@ -61,6 +82,53 @@ export default function HeroPanel({
 
     return null;
   }, [nextPrayer, currentTime, iqamahTimes]);
+
+  const lastBeepedPrayerRef = useRef<string | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  // ── Clean up AudioContext on unmount ──────────────────────────────────
+  useEffect(() => {
+    return () => {
+      audioCtxRef.current?.close();
+      audioCtxRef.current = null;
+    };
+  }, []);
+
+  // ── Iqamah beep: fire once when countdown reaches 2 seconds left ──────
+  useEffect(() => {
+    if (!nextPrayer) return;
+
+    // Reset the beep guard when we leave iqamah phase (next prayer cycle)
+    if (!countdown?.isIqamah) {
+      if (lastBeepedPrayerRef.current !== null) {
+        lastBeepedPrayerRef.current = null;
+      }
+      return;
+    }
+
+    const iqMins = iqamahTimes[nextPrayer.name] ?? 0;
+    const iqTime = new Date(nextPrayer.time.getTime() + iqMins * 60_000);
+    const iqDiff = iqTime.getTime() - currentTime.getTime();
+
+    // Only fire at 2s or less, and only once per prayer per cycle
+    if (iqDiff <= 2000 && iqDiff > 0 && lastBeepedPrayerRef.current !== nextPrayer.name) {
+      lastBeepedPrayerRef.current = nextPrayer.name;
+      try {
+        if (!audioCtxRef.current) {
+          audioCtxRef.current = new AudioContext();
+        }
+        const ctx = audioCtxRef.current;
+        // Resume if suspended (browser autoplay policy)
+        if (ctx.state === 'suspended') {
+          ctx.resume().then(() => playBeep(ctx)).catch(() => {});
+        } else {
+          playBeep(ctx);
+        }
+      } catch {
+        // Audio not available
+      }
+    }
+  }, [currentTime, nextPrayer, countdown, iqamahTimes]);
 
   const iqamahTimeStr = useMemo(() => {
     if (!nextPrayer || !prayerTimes) return null;
