@@ -1,3 +1,5 @@
+import { getEffectiveIqamah } from '../utils/iqamah';
+
 interface PrayerTimes {
   Fajr:    string;
   Sunrise: string;
@@ -15,60 +17,6 @@ interface PrayerSidebarProps {
   displayPrayerName: (name: string) => string;
   accentColor: string;
   accentRgb: string;
-}
-
-function zeroPad(n: number) {
-  return n.toString().padStart(2, '0');
-}
-
-function msToClock(ms: number) {
-  const h = Math.floor(ms / 3_600_000);
-  const m = Math.floor((ms % 3_600_000) / 60_000);
-  const s = Math.floor((ms % 60_000) / 1_000);
-  return `${zeroPad(h)}:${zeroPad(m)}:${zeroPad(s)}`;
-}
-
-function getIqamahTimeStr(adhanTimeStr: string, iqamahMins: number, ref: Date): string {
-  const [h, m] = adhanTimeStr.split(':').map(Number);
-  const d = new Date(ref);
-  d.setHours(h, m, 0, 0);
-  const iq = new Date(d.getTime() + iqamahMins * 60_000);
-  return `${zeroPad(iq.getHours())}:${zeroPad(iq.getMinutes())}`;
-}
-
-type CountdownResult =
-  | { type: 'adhan';  value: string }
-  | { type: 'iqamah'; value: string }
-  | { type: 'offset'; value: string }
-  | null;
-
-function getCountdown(
-  prayer: string,
-  timeStr: string,
-  isActive: boolean,
-  iqamahMins: number,
-  now: Date,
-): CountdownResult {
-  const [h, m] = timeStr.split(':').map(Number);
-  const adhanDate = new Date(now);
-  adhanDate.setHours(h, m, 0, 0);
-  const iqamahDate = new Date(adhanDate.getTime() + iqamahMins * 60_000);
-  const nowMs = now.getTime();
-
-  if (!isActive) {
-    if (iqamahMins > 0) {
-      return { type: 'offset', value: `+${iqamahMins} min` };
-    }
-    return null;
-  }
-
-  if (adhanDate.getTime() > nowMs) {
-    return { type: 'adhan', value: msToClock(adhanDate.getTime() - nowMs) };
-  }
-  if (iqamahDate.getTime() > nowMs) {
-    return { type: 'iqamah', value: msToClock(iqamahDate.getTime() - nowMs) };
-  }
-  return null;
 }
 
 export default function PrayerSidebar({
@@ -91,9 +39,19 @@ export default function PrayerSidebar({
         const isActive  = nextPrayer?.name === prayer;
         const isSyuruq  = prayer === 'Sunrise';
         const iqMins    = iqamahTimes[prayer] ?? 0;
-        const countdown = getCountdown(prayer, timeStr, isActive, iqMins, currentTime);
-        const iqStr     = iqMins > 0
-          ? getIqamahTimeStr(timeStr, iqMins, currentTime)
+
+        // Compute effective iqamah (respecting Subuh/Isya caps)
+        const effective = iqMins > 0
+          ? getEffectiveIqamah(timeStr, iqMins, prayer, currentTime)
+          : null;
+
+        // Right column: always show offset label + iqamah time
+        // (countdown is already in HeroPanel)
+        const rightLabel = effective && effective.effectiveMinutes > 0
+          ? `(+${effective.effectiveMinutes} min)`
+          : null;
+        const rightTime  = effective && effective.effectiveMinutes > 0
+          ? effective.iqamahTimeStr
           : null;
 
         const subColor = 'rgba(255,255,255,0.92)';
@@ -110,7 +68,6 @@ export default function PrayerSidebar({
                 : 'transparent',
             }}
           >
-
             {/* Prayer name (Latin) */}
             <div className="flex items-center min-w-0" style={{ width: '35%' }}>
               <span
@@ -125,7 +82,7 @@ export default function PrayerSidebar({
               </span>
             </div>
 
-            {/* Adhan time */}
+            {/* Adhan time — Syuruq does NOT get the "Adhan" label */}
             <div className="flex flex-col items-center flex-1">
               <span
                 className="font-mono font-semibold tabular-nums"
@@ -136,43 +93,42 @@ export default function PrayerSidebar({
               >
                 {timeStr}
               </span>
-              <span className="text-white/25" style={{ fontSize: 'clamp(0.78rem, 0.9vw, 0.92rem)' }}>Adhan</span>
+              {!isSyuruq && (
+                <span
+                  className="text-white/25"
+                  style={{ fontSize: 'clamp(0.78rem, 0.9vw, 0.92rem)' }}
+                >
+                  Adhan
+                </span>
+              )}
             </div>
 
-            {/* Iqamah column — Syuruq shows the +offset time without the "Iqamah" label */}
+            {/* Iqamah column */}
             <div className="flex flex-col items-end" style={{ width: '28%' }}>
-              {countdown ? (
+              {rightLabel && rightTime ? (
                 <>
                   <span
-                    className="font-mono font-bold tabular-nums"
+                    className="font-mono font-medium tabular-nums text-white/45"
+                    style={{ fontSize: 'clamp(0.72rem, 0.82vw, 0.82rem)' }}
+                  >
+                    {rightLabel}
+                  </span>
+                  <span
+                    className="font-mono font-semibold tabular-nums"
                     style={{
-                      fontSize: 'clamp(1.08rem, 1.75vw, 1.55rem)',
-                      color:
-                        countdown.type === 'iqamah' ? '#f59e0b'
-                        : countdown.type === 'adhan'  ? accentColor
-                        : 'rgba(255,255,255,0.50)',
+                      color: isActive ? accentColor : 'rgba(255,255,255,0.82)',
+                      fontSize: 'clamp(1.18rem, 1.95vw, 1.7rem)',
                     }}
                   >
-                    {countdown.value}
-                  </span>
-                  {!(isSyuruq && countdown.type !== 'adhan') && (
-                    <span className="text-white/25" style={{ fontSize: 'clamp(0.76rem, 0.88vw, 0.9rem)' }}>
-                      {countdown.type === 'iqamah' ? 'Until Iqamah'
-                       : countdown.type === 'adhan'  ? 'Until Adhan'
-                       : 'Iqamah'}
-                    </span>
-                  )}
-                </>
-              ) : iqStr ? (
-                <>
-                  <span
-                    className="font-mono font-medium tabular-nums text-white/55"
-                    style={{ fontSize: 'clamp(1.08rem, 1.75vw, 1.55rem)' }}
-                  >
-                    {iqStr}
+                    {rightTime}
                   </span>
                   {!isSyuruq && (
-                    <span className="text-white/25" style={{ fontSize: 'clamp(0.76rem, 0.88vw, 0.9rem)' }}>Iqamah</span>
+                    <span
+                      className="text-white/25"
+                      style={{ fontSize: 'clamp(0.78rem, 0.9vw, 0.92rem)' }}
+                    >
+                      Iqamah
+                    </span>
                   )}
                 </>
               ) : null}

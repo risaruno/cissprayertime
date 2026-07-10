@@ -5,6 +5,7 @@ import GeometricBackground from './components/GeometricBackground';
 import TopBar from './components/TopBar';
 import HeroPanel from './components/HeroPanel';
 import PrayerSidebar from './components/PrayerSidebar';
+import { getEffectiveIqamah } from './utils/iqamah';
 
 // Import logos
 import LeftLogo from './assets/logo/left.png';
@@ -76,7 +77,7 @@ function App() {
   // Iqamah times (minutes after adhan)
   const [iqamahTimes, setIqamahTimes] = useState<{ [key: string]: number }>({
     'Fajr': 30,
-    'Sunrise': 20,
+    'Sunrise': 15,
     'Dhuhr': 30,
     'Asr': 30,
     'Maghrib': 20,
@@ -140,7 +141,8 @@ function App() {
       prayerTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
       const iqamahMinutes = iqamahTimes[name] || 0;
-      const iqamahTime = new Date(prayerTime.getTime() + iqamahMinutes * 60 * 1000);
+      const effective = getEffectiveIqamah(time, iqamahMinutes, name, now);
+      const iqamahTime = new Date(prayerTime.getTime() + effective.effectiveMinutes * 60 * 1000);
 
       return { name, time: prayerTime, iqamahTime };
     });
@@ -530,7 +532,8 @@ function App() {
                       const [h, m] = timeStr.split(':').map(Number);
                       const adhanMs = new Date();
                       adhanMs.setHours(h, m, 0, 0);
-                      const iqMs = adhanMs.getTime() + (iqamahTimes[prayer] || 0) * 60_000;
+                      const eff = getEffectiveIqamah(timeStr, iqamahTimes[prayer] || 0, prayer, adhanMs);
+                      const iqMs = adhanMs.getTime() + eff.effectiveMinutes * 60_000;
                       const targetMs = iqMs - 2000; // 2 seconds before iqamah
                       return (
                         <button

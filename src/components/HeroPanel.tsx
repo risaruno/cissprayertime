@@ -1,5 +1,6 @@
 import { useMemo, useEffect, useRef } from 'react';
 import RotatingVerse from './RotatingVerse';
+import { getEffectiveIqamah, zeroPad } from '../utils/iqamah';
 
 interface PrayerTimes {
   Fajr: string;
@@ -18,10 +19,6 @@ interface HeroPanelProps {
   displayPrayerName: (name: string) => string;
   accentColor: string;
   accentRgb: string;
-}
-
-function zeroPad(n: number) {
-  return n.toString().padStart(2, '0');
 }
 
 function msToClock(ms: number) {
@@ -74,7 +71,13 @@ export default function HeroPanel({
     }
 
     const iqMins = iqamahTimes[nextPrayer.name] ?? 0;
-    const iqTime = new Date(nextPrayer.time.getTime() + iqMins * 60_000);
+    if (!iqMins) return null;
+
+    // Use effective iqamah to respect Subuh/Isya caps
+    const [adh, adm] = [nextPrayer.time.getHours(), nextPrayer.time.getMinutes()];
+    const adhanStr = `${zeroPad(adh)}:${zeroPad(adm)}`;
+    const effective = getEffectiveIqamah(adhanStr, iqMins, nextPrayer.name, currentTime);
+    const iqTime = new Date(nextPrayer.time.getTime() + effective.effectiveMinutes * 60_000);
     const iqDiff = iqTime.getTime() - currentTime.getTime();
     if (iqDiff > 0) {
       return { value: msToClock(iqDiff), label: 'Until Iqamah', isIqamah: true };
@@ -107,7 +110,10 @@ export default function HeroPanel({
     }
 
     const iqMins = iqamahTimes[nextPrayer.name] ?? 0;
-    const iqTime = new Date(nextPrayer.time.getTime() + iqMins * 60_000);
+    const [adh, adm] = [nextPrayer.time.getHours(), nextPrayer.time.getMinutes()];
+    const adhanStr = `${zeroPad(adh)}:${zeroPad(adm)}`;
+    const effective = getEffectiveIqamah(adhanStr, iqMins, nextPrayer.name, currentTime);
+    const iqTime = new Date(nextPrayer.time.getTime() + effective.effectiveMinutes * 60_000);
     const iqDiff = iqTime.getTime() - currentTime.getTime();
 
     // Only fire at 2s or less, and only once per prayer per cycle
@@ -137,11 +143,9 @@ export default function HeroPanel({
     const iqMins = iqamahTimes[nextPrayer.name] ?? 0;
     if (!iqMins) return null;
 
-    const [h, m] = t.split(':').map(Number);
-    const adhan = new Date(currentTime);
-    adhan.setHours(h, m, 0, 0);
-    const iq = new Date(adhan.getTime() + iqMins * 60_000);
-    return `${zeroPad(iq.getHours())}:${zeroPad(iq.getMinutes())}`;
+    const effective = getEffectiveIqamah(t, iqMins, nextPrayer.name, currentTime);
+    if (effective.effectiveMinutes === 0) return null;
+    return effective.iqamahTimeStr;
   }, [nextPrayer, prayerTimes, iqamahTimes, currentTime]);
 
   return (
