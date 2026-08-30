@@ -79,9 +79,9 @@ function App() {
     'Fajr': 30,
     'Sunrise': 15,
     'Dhuhr': 30,
-    'Asr': 30,
-    'Maghrib': 20,
-    'Isha': 30
+    'Asr': 15,
+    'Maghrib': 15,
+    'Isha': 15
   });
 
   // format current time - Update less frequently to save resources
