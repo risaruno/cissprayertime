@@ -17,6 +17,7 @@ interface PrayerSidebarProps {
   displayPrayerName: (name: string) => string;
   accentColor: string;
   accentRgb: string;
+  isFriday: boolean;
 }
 
 export default function PrayerSidebar({
@@ -27,6 +28,7 @@ export default function PrayerSidebar({
   displayPrayerName,
   accentColor,
   accentRgb,
+  isFriday,
 }: PrayerSidebarProps) {
   const entries = Object.entries(prayerTimes) as [keyof PrayerTimes, string][];
 
@@ -98,7 +100,7 @@ export default function PrayerSidebar({
                   className="text-white/25"
                   style={{ fontSize: 'clamp(0.78rem, 0.9vw, 0.92rem)' }}
                 >
-                  Adhan
+                  {isFriday && prayer === 'Dhuhr' ? 'Starts at' : 'Adhan'}
                 </span>
               )}
             </div>

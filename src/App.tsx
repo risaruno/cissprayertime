@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import PerformanceMonitor from './components/PerformanceMonitor';
 import WeatherEffects from './components/WeatherEffects';
 import GeometricBackground from './components/GeometricBackground';
@@ -47,6 +47,12 @@ const TIME_THEMES: Record<string, TimeTheme> = {
   isha:    { bgColor: '#0e0a1a', accentColor: '#a78bfa', accentRgb: '167,139,250'  },  // violet
 };
 
+const FRIDAY_THEME: TimeTheme = {
+  bgColor: '#f4faf9',
+  accentColor: '#006b80',
+  accentRgb: '0,107,128',
+};
+
 const WEATHER_API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
 const HAS_WEATHER_API_KEY = Boolean(
   WEATHER_API_KEY &&
@@ -86,6 +92,16 @@ function App() {
 
   // format current time - Update less frequently to save resources
   const [currentTime, setCurrentTime] = useState(new Date());
+  const isFriday = currentTime.getDay() === 5;
+  const activeTheme = isFriday ? FRIDAY_THEME : timeTheme;
+  const effectivePrayerTimes = useMemo<PrayerTimes | null>(() => {
+    if (!prayerTimes || !isFriday) return prayerTimes;
+    return { ...prayerTimes, Dhuhr: '13:00' };
+  }, [prayerTimes, isFriday]);
+  const effectiveIqamahTimes = useMemo(
+    () => (isFriday ? { ...iqamahTimes, Dhuhr: 0 } : iqamahTimes),
+    [iqamahTimes, isFriday],
+  );
   
   useEffect(() => {
     const timer = setInterval(() => {
@@ -140,7 +156,7 @@ function App() {
       const prayerTime = new Date();
       prayerTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
-      const iqamahMinutes = iqamahTimes[name] || 0;
+      const iqamahMinutes = effectiveIqamahTimes[name] || 0;
       const effective = getEffectiveIqamah(time, iqamahMinutes, name, now);
       const iqamahTime = new Date(prayerTime.getTime() + effective.effectiveMinutes * 60 * 1000);
 
@@ -179,7 +195,7 @@ function App() {
       };
       setCurrentPrayer(yesterdayPrayer);
     }
-  }, [iqamahTimes]);
+  }, [effectiveIqamahTimes]);
 
   // Fetch prayer times
   const fetchPrayerTimes = useCallback(async (city: string) => {
@@ -204,7 +220,13 @@ function App() {
         };
         
         setPrayerTimes(filteredTimings);
-        updateNextPrayer(filteredTimings);
+        const scheduleDate = new Date();
+        updateNextPrayer(
+          scheduleDate.getDay() === 5
+            ? { ...filteredTimings, Dhuhr: '13:00' }
+            : filteredTimings,
+          scheduleDate,
+        );
         
         // Set calendar data
         setCalendar({
@@ -299,21 +321,21 @@ function App() {
 
   // Update background every minute
   useEffect(() => {
-    updateBackground(prayerTimes, currentTime);
+    updateBackground(effectivePrayerTimes, currentTime);
     const interval = setInterval(() => {
-      updateBackground(prayerTimes, currentTime);
+      updateBackground(effectivePrayerTimes, currentTime);
     }, 60000); // Update every minute
     
     return () => clearInterval(interval);
-  }, [prayerTimes, updateBackground, currentTime]);
+  }, [effectivePrayerTimes, updateBackground, currentTime]);
 
   // Update next prayer and background when currentTime changes (for debug mode)
   useEffect(() => {
-    if (prayerTimes) {
-      updateNextPrayer(prayerTimes, currentTime);
-      updateBackground(prayerTimes, currentTime);
+    if (effectivePrayerTimes) {
+      updateNextPrayer(effectivePrayerTimes, currentTime);
+      updateBackground(effectivePrayerTimes, currentTime);
     }
-  }, [currentTime, prayerTimes, updateNextPrayer, updateBackground]);
+  }, [currentTime, effectivePrayerTimes, updateNextPrayer, updateBackground]);
 
   // Auto-refresh prayer times daily at midnight for Smart TVs
   useEffect(() => {
@@ -339,12 +361,12 @@ function App() {
   // Simplified prayer names for display
   const displayPrayerName = (name: string) => {
     const nameMap: { [key: string]: string } = {
-      'Fajr': 'Subuh',
-      'Sunrise': 'Syuruq',
-      'Dhuhr': 'Dzuhur',
-      'Asr': 'Ashar',
+      'Fajr': 'Fajr',
+      'Sunrise': 'Sunrise',
+      'Dhuhr': isFriday ? 'Jumah' : 'Dhuhr',
+      'Asr': 'Asr',
       'Maghrib': 'Maghrib',
-      'Isha': 'Isya'
+      'Isha': 'Isha'
     };
     return nameMap[name] || name;
   };
@@ -353,10 +375,17 @@ function App() {
     /* ── Root: dark background ───────────────────────────────────────────── */
     <div
       className="h-screen flex flex-col overflow-hidden"
-      style={{ backgroundColor: timeTheme.bgColor }}
+      data-friday={isFriday ? 'true' : 'false'}
+      style={{
+        backgroundColor: activeTheme.bgColor,
+        backgroundImage: isFriday
+          ? 'radial-gradient(circle at 12% 8%, rgba(0,152,163,.10), transparent 40%), radial-gradient(circle at 85% 90%, rgba(207,178,112,.12), transparent 38%)'
+          : undefined,
+        transition: 'background-color 900ms ease',
+      }}
     >
       {/* ── Animated Islamic geometric background ────────────────────────── */}
-      <GeometricBackground accentColor={timeTheme.accentColor} />
+      <GeometricBackground accentColor={activeTheme.accentColor} />
 
       {/* ── Weather effects (rain / snow) ────────────────────────────────── */}
       <WeatherEffects
@@ -371,7 +400,8 @@ function App() {
         loading={loading}
         leftLogo={LeftLogo}
         rightLogo={RightLogo}
-        accentColor={timeTheme.accentColor}
+        accentColor={activeTheme.accentColor}
+        isFriday={isFriday}
       />
 
       {/* ── Main body: hero (left 60%) + prayer sidebar (right 40%) ─────── */}
@@ -379,24 +409,26 @@ function App() {
         <HeroPanel
           currentTime={currentTime}
           nextPrayer={nextPrayer}
-          prayerTimes={prayerTimes}
-          iqamahTimes={iqamahTimes}
+          prayerTimes={effectivePrayerTimes}
+          iqamahTimes={effectiveIqamahTimes}
           displayPrayerName={displayPrayerName}
-          accentColor={timeTheme.accentColor}
-          accentRgb={timeTheme.accentRgb}
+          accentColor={activeTheme.accentColor}
+          accentRgb={activeTheme.accentRgb}
+          isFriday={isFriday}
         />
 
         {/* Prayer sidebar — only rendered once prayer times are loaded */}
         <div className="relative z-10 flex-1 overflow-hidden">
-          {prayerTimes ? (
+          {effectivePrayerTimes ? (
             <PrayerSidebar
-              prayerTimes={prayerTimes}
+              prayerTimes={effectivePrayerTimes}
               nextPrayer={nextPrayer}
               currentTime={currentTime}
-              iqamahTimes={iqamahTimes}
+              iqamahTimes={effectiveIqamahTimes}
               displayPrayerName={displayPrayerName}
-              accentColor={timeTheme.accentColor}
-              accentRgb={timeTheme.accentRgb}
+              accentColor={activeTheme.accentColor}
+              accentRgb={activeTheme.accentRgb}
+              isFriday={isFriday}
             />
           ) : (
             <div className="flex items-center justify-center h-full">
@@ -410,7 +442,7 @@ function App() {
       <div
         className="relative z-10 flex-shrink-0 flex items-center justify-center gap-6 px-6 py-2"
         style={{
-          borderTop: `1px solid ${timeTheme.accentColor}40`,
+          borderTop: `1px solid ${activeTheme.accentColor}40`,
           backgroundColor: 'rgba(0,0,0,0.40)',
         }}
       >
@@ -432,7 +464,7 @@ function App() {
 
         <span className="text-white/50 text-sm">(서울이슬람교육센터)</span>
 
-        <span style={{ color: timeTheme.accentColor + '70' }} className="text-sm">☪</span>
+        <span style={{ color: activeTheme.accentColor + '70' }} className="text-sm">☪</span>
 
         <span className="text-white/40 text-xs italic">
           Center of Islamic Studies Seoul

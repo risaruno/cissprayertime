@@ -19,6 +19,7 @@ interface HeroPanelProps {
   displayPrayerName: (name: string) => string;
   accentColor: string;
   accentRgb: string;
+  isFriday: boolean;
 }
 
 function msToClock(ms: number) {
@@ -57,17 +58,19 @@ export default function HeroPanel({
   displayPrayerName,
   accentColor,
   accentRgb,
+  isFriday,
 }: HeroPanelProps) {
   const hh = zeroPad(currentTime.getHours());
   const mm = zeroPad(currentTime.getMinutes());
   const ss = zeroPad(currentTime.getSeconds());
+  const isNextJumah = isFriday && nextPrayer?.name === 'Dhuhr';
 
   const countdown = useMemo(() => {
     if (!nextPrayer) return null;
     const diff = nextPrayer.time.getTime() - currentTime.getTime();
 
     if (diff > 0) {
-      return { value: msToClock(diff), label: 'Until Adhan', isIqamah: false };
+      return { value: msToClock(diff), label: isNextJumah ? 'Until Jumah' : 'Until Adhan', isIqamah: false };
     }
 
     const iqMins = iqamahTimes[nextPrayer.name] ?? 0;
@@ -84,7 +87,7 @@ export default function HeroPanel({
     }
 
     return null;
-  }, [nextPrayer, currentTime, iqamahTimes]);
+  }, [nextPrayer, currentTime, iqamahTimes, isNextJumah]);
 
   const lastBeepedPrayerRef = useRef<string | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -190,12 +193,16 @@ export default function HeroPanel({
                 className="font-display font-bold leading-tight"
                 style={{
                   color: accentColor,
-                  fontSize: '0.875rem',
+                  fontSize: 'clamp(1.35rem, 2.2vw, 2rem)',
                 }}
               >
                 {displayPrayerName(nextPrayer.name)}
               </p>
-              {iqamahTimeStr && (
+              {isNextJumah ? (
+                <p className="text-white/70 text-sm mt-1">
+                  Starts at <span className="font-mono font-semibold">{zeroPad(nextPrayer.time.getHours())}:{zeroPad(nextPrayer.time.getMinutes())}</span>
+                </p>
+              ) : iqamahTimeStr && (
                 <p className="text-white/40 text-xs mt-1">
                   Iqamah at {iqamahTimeStr}
                 </p>
@@ -222,7 +229,7 @@ export default function HeroPanel({
 
       {prayerTimes && (
         <div className="flex-1 min-h-0 mt-2">
-          <RotatingVerse />
+          <RotatingVerse isFriday={isFriday} accentColor={accentColor} accentRgb={accentRgb} />
         </div>
       )}
     </div>

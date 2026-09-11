@@ -1,4 +1,4 @@
-import { MapPin } from 'lucide-react';
+import { MapPin, Sparkles } from 'lucide-react';
 
 interface CalendarData {
   hijri: string;
@@ -12,6 +12,7 @@ interface TopBarProps {
   leftLogo: string;
   rightLogo: string;
   accentColor: string;
+  isFriday: boolean;
 }
 
 export default function TopBar({
@@ -21,6 +22,7 @@ export default function TopBar({
   leftLogo,
   rightLogo,
   accentColor,
+  isFriday,
 }: TopBarProps) {
   return (
     <div
@@ -46,6 +48,14 @@ export default function TopBar({
           </h1>
           <p className="text-white/50 text-xs">Center of Islamic Studies Seoul</p>
         </div>
+        {isFriday && (
+          <div
+            className="ml-2 hidden items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] lg:flex"
+            style={{ color: accentColor, border: `1px solid ${accentColor}55`, background: `${accentColor}14` }}
+          >
+            <Sparkles className="h-3 w-3" /> Blessed Friday
+          </div>
+        )}
       </div>
 
       {/* ── Centre: Hijri date ─────────────────────────────────────────────── */}

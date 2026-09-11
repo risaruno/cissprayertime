@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import hadithPoolData from '../data/hadith-30-words.json';
+import FridayDonationPoster from './FridayDonationPoster';
 
 interface HadithEntry {
   collection: string;
@@ -13,7 +14,17 @@ const ROTATION_MS = 60_000;
 const DONATION_EVERY = 3;
 const DEBUG_MODE = import.meta.env.VITE_DEBUG === 'true';
 
-export default function RotatingVerse() {
+interface RotatingVerseProps {
+  isFriday?: boolean;
+  accentColor?: string;
+  accentRgb?: string;
+}
+
+export default function RotatingVerse({
+  isFriday = false,
+  accentColor = '#2dd4bf',
+  accentRgb = '45,212,191',
+}: RotatingVerseProps) {
   const [hadith, setHadith] = useState<HadithEntry | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDonation, setShowDonation] = useState(false);
@@ -62,7 +73,6 @@ export default function RotatingVerse() {
     setLoading(false);
     hadithsSinceDonationRef.current += 1;
     currentHadithIdRef.current = entry.reference;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── Mount: load the static pool ──────────────────────────────────────────
@@ -117,6 +127,10 @@ export default function RotatingVerse() {
     const interval = setInterval(checkOneAm, 60_000);
     return () => clearInterval(interval);
   }, []);
+
+  if (isFriday) {
+    return <FridayDonationPoster accentColor={accentColor} accentRgb={accentRgb} />;
+  }
 
   return (
     <div className="h-full flex items-center justify-center">
