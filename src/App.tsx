@@ -48,9 +48,9 @@ const TIME_THEMES: Record<string, TimeTheme> = {
 };
 
 const FRIDAY_THEME: TimeTheme = {
-  bgColor: '#f4faf9',
-  accentColor: '#006b80',
-  accentRgb: '0,107,128',
+  bgColor: '#031510',
+  accentColor: '#f4c95d',
+  accentRgb: '244,201,93',
 };
 
 const WEATHER_API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
@@ -379,7 +379,7 @@ function App() {
       style={{
         backgroundColor: activeTheme.bgColor,
         backgroundImage: isFriday
-          ? 'radial-gradient(circle at 12% 8%, rgba(0,152,163,.10), transparent 40%), radial-gradient(circle at 85% 90%, rgba(207,178,112,.12), transparent 38%)'
+          ? 'radial-gradient(circle at 18% 12%, rgba(16,185,129,.16), transparent 34%), radial-gradient(circle at 82% 86%, rgba(244,201,93,.08), transparent 32%)'
           : undefined,
         transition: 'background-color 900ms ease',
       }}
