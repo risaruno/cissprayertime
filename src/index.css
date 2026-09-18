@@ -27,7 +27,79 @@
   100% { opacity: 1; transform: translateY(0); }
 }
 
+/* Friday donation poster */
+.friday-poster__glow {
+  position: absolute;
+  width: 18rem;
+  height: 18rem;
+  left: 50%;
+  top: -13rem;
+  transform: translateX(-50%);
+  border-radius: 9999px;
+  opacity: .2;
+  filter: blur(55px);
+}
+
+.friday-poster__arch {
+  position: absolute;
+  inset: 10% 18% -48%;
+  border: 1px solid rgba(244, 201, 93, .12);
+  border-radius: 999px 999px 0 0;
+  box-shadow: 0 0 0 18px rgba(244, 201, 93, .018), 0 0 0 38px rgba(244, 201, 93, .012);
+}
+
+[data-friday='true'] .friday-poster {
+  animation: friday-enter .7s cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes friday-enter {
+  from { opacity: 0; transform: translateY(10px) scale(.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-friday='true'] .friday-poster { animation: none; }
+}
+
+.friday-slide {
+  transition: opacity 650ms ease;
+}
+
+.friday-slide[data-visible='false'] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.friday-slide[data-visible='true'] {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .friday-slide { transition: none; }
+}
+
 /* ─── Rain / Snow (WeatherEffects) ──────────────────────────────────────────── */
+.friday-poster-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  background: radial-gradient(ellipse at top left, rgba(244,201,93,.15), transparent 65%), linear-gradient(130deg, #0b3024, #031510 68%);
+}
+.friday-poster-message { padding: clamp(14px, 2vw, 36px); color: #f4c95d; }
+.friday-poster-eyebrow { display: flex; gap: 8px; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: .16em; }
+.friday-poster-message h2 { margin: 18px 0 12px; font-family: 'Playfair Display', serif; font-size: clamp(22px, 2.5vw, 44px); line-height: 1.15; font-weight: 700; }
+.friday-poster-message p { font-size: clamp(11px, 1vw, 16px); line-height: 1.65; color: #c3d3ca; }
+.friday-poster-account { display: flex; align-items: center; gap: 12px; border-top: 1px solid rgba(244,201,93,.25); margin-top: 24px; padding-top: 20px; }
+.friday-poster-account span { font-size: 10px; letter-spacing: .08em; }
+.friday-poster-account strong { display: block; margin: 6px 0; font-family: 'Roboto Mono', monospace; font-size: clamp(12px, 1.2vw, 20px); letter-spacing: 0; }
+.friday-poster-account small { letter-spacing: 0; color: #c3d3ca; }
+.friday-poster-thanks { display: block; margin-top: 20px; color: #aabeb2; font-size: 10px; }
+.friday-poster-image { width: 100%; height: 100%; min-height: 0; object-fit: contain; background: white; }
+@media (max-width: 900px) {
+  .friday-poster-layout { grid-template-columns: 1fr; }
+  .friday-poster-message { display: none; }
+}
+
 @keyframes rain-fall {
   0%   { transform: translateY(-20px); }
   100% { transform: translateY(100vh); }
