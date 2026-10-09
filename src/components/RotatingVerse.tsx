@@ -11,7 +11,7 @@ interface HadithEntry {
 }
 
 const ROTATION_MS = 60_000;
-const DONATION_EVERY = 3;
+const DONATION_EVERY = 1;
 const DEBUG_MODE = import.meta.env.VITE_DEBUG === 'true';
 
 interface RotatingVerseProps {
@@ -33,7 +33,7 @@ export default function RotatingVerse({
 
   const poolRef = useRef<HadithEntry[]>([]);
   const poolIndexRef = useRef(0);
-  const hadithsSinceDonationRef = useRef(0);
+  const hadithsSinceDonationRef = useRef(DONATION_EVERY);
   const nextRefreshAtRef = useRef(Date.now() + ROTATION_MS);
   const currentHadithIdRef = useRef<number | null>(null);
 
@@ -128,7 +128,7 @@ export default function RotatingVerse({
     return () => clearInterval(interval);
   }, []);
 
-  if (isFriday) {
+  if (isFriday || showDonation) {
     return <FridayDonationPoster accentColor={accentColor} accentRgb={accentRgb} />;
   }
 
@@ -137,13 +137,16 @@ export default function RotatingVerse({
       <div
         className="relative w-full h-full rounded-2xl flex flex-col text-center p-3"
         style={{
+          '--hadith-accent': accentColor,
+          '--hadith-accent-rgb': accentRgb,
           border: '1px solid rgba(255,255,255,0.10)',
           background: 'rgba(255,255,255,0.02)',
           boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
-        }}
+        } as React.CSSProperties}
       >
-        <p className="text-white/40 text-xs uppercase tracking-[0.22em] mb-2">
-          {showDonation ? 'Masjid Donation' : 'Riyad us-Salihin Hadith'}
+        <p className="hadith-heading">
+          <span className="hadith-heading__mark" />
+          Riyad us-Salihin Hadith
         </p>
 
         {showDonation ? (
@@ -179,23 +182,18 @@ export default function RotatingVerse({
             </p>
           </div>
         ) : (
-          <>
-            <p
-              className="text-white/88 font-medium leading-relaxed"
-              style={{
-                fontFamily: 'Inter, system-ui, sans-serif',
-                fontSize: '0.95rem',
-              }}
-            >
+          <div className="hadith-quote" aria-live="polite">
+            <span className="hadith-quote__glyph" aria-hidden="true">“</span>
+            <p className="hadith-quote__text">
               {hadith?.text ?? (loading ? 'Loading hadith…' : 'Unable to load hadith right now.')}
             </p>
-
             {hadith && (
-              <p className="text-white/38 text-xs mt-3">
-                {hadith.chapterTitle}:{hadith.hadithNumber} · Riyad us-Salihin:{hadith.reference}
+              <p className="hadith-quote__reference">
+                <span>{hadith.chapterTitle} · Hadith {hadith.hadithNumber}</span>
+                <span>Riyad us-Salihin {hadith.reference}</span>
               </p>
             )}
-          </>
+          </div>
         )}
 
         <div className="absolute bottom-4 right-4 flex items-center gap-2">

@@ -1,11 +1,11 @@
 import { Heart, Landmark } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import donationPoster from '../assets/friday-donation.png';
-import donationPosterEnglish from '../assets/friday-donation-en.png';
+import { useEffect, useState, type CSSProperties } from 'react';
+import donationPoster from '../assets/friday-donation-id-new.png';
+import donationPosterEnglish from '../assets/friday-donation-en-new.png';
 
 const POSTERS = [
-  { src: donationPoster, alt: 'Sedekah jariyah operasional Masjid Al-Falah Seoul. Kebutuhan per bulan 3.100.000 won. Woori Bank 1005-904-584-084 atas nama 서울이슬람교육센터. QRIS Indonesia tersedia pada poster.' },
-  { src: donationPosterEnglish, alt: 'Open donation: Masjid Al-Falah Seoul operational fund. Monthly expenses: 3,100,000 won. Woori Bank 1005-904-584-084, 서울이슬람교육센터. Scan the poster QR code for QRIS Indonesia.' },
+  { src: donationPoster, alt: 'Poster donasi operasional Masjid Al-Falah Seoul. Kebutuhan per bulan 3.100.000 won. Informasi rekening Woori Bank dan QRIS Indonesia tersedia pada poster.', landscape: true },
+  { src: donationPosterEnglish, alt: 'Open donation: Masjid Al-Falah Seoul operational fund. Monthly expenses: 3,100,000 won. Woori Bank 1005-904-584-084, 서울이슬람교육센터. Scan the QR code for QRIS Indonesia.', landscape: true },
 ];
 
 // Advance to the next slide every 15 seconds.
@@ -39,36 +39,37 @@ export default function FridayDonationPoster({
   return (
     <section
       className="friday-poster relative h-full min-h-0 overflow-hidden rounded-2xl"
-      aria-label="Poster donasi Jumat"
+      aria-label="Masjid donation posters"
       style={{
+        '--poster-accent': accentColor,
+        '--poster-accent-rgb': accentRgb,
         border: `1px solid rgba(${accentRgb},0.42)`,
         background: `linear-gradient(145deg, rgba(${accentRgb},0.20), rgba(3,24,19,0.90) 54%, rgba(5,12,10,0.96))`,
         boxShadow: `0 20px 70px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08)`,
-      }}
+      } as CSSProperties}
     >
       <div className="friday-poster__glow" style={{ background: accentColor }} />
       <div className="friday-poster__arch" aria-hidden="true" />
 
       {POSTERS.map((poster, index) => (<div
         key={poster.src}
-        className="friday-slide friday-poster-layout absolute inset-0 z-20"
+        className={`friday-slide friday-poster-layout absolute inset-0 z-20${poster.landscape ? ' friday-poster-layout--landscape' : ''}`}
         data-visible={activeSlide === index}
         aria-hidden={activeSlide !== index}
       >
         <div className="friday-poster-message">
-          <span className="friday-poster-eyebrow"><Heart size={16} /> {index === 0 ? 'BERBAGI KEBAIKAN' : 'GIVE WITH HEART'}</span>
-          <h2>{index === 0 ? 'Bersama, makmurkan masjid kita.' : 'Together, support our masjid.'}</h2>
+          <span className="friday-poster-eyebrow"><Heart size={16} /> {index === 0 ? 'AMAL JARIYAH' : 'GIVE WITH HEART'}</span>
+          <h2>{index === 0 ? 'Langkah kecil untuk Masjid Al-Falah' : 'Small step for Al-Falah Mosque'}</h2>
           <p>{index === 0 ? 'Sedekah Anda mendukung kegiatan dan operasional Masjid Al-Falah Seoul.' : 'Your generosity supports the activities and daily operations of Masjid Al-Falah Seoul.'}</p>
           <div className="friday-poster-account">
             <Landmark size={24} />
-            <span>WOORI BANK<strong>1005-904-584-084</strong><small>서울이슬람교육센터</small></span>
+            <span>WOORI BANK 우리 은행<strong>1005-904-584-084</strong><small className="friday-poster-account-name">서울이슬람교육센터</small></span>
           </div>
-          <span className="friday-poster-thanks">{index === 0 ? 'Jazakumullahu khairan atas kebaikan Anda' : 'Jazakumullahu khairan for your generosity'}</span>
         </div>
         <img
           src={poster.src}
           alt={poster.alt}
-          className="friday-poster-image"
+          className={`friday-poster-image${poster.landscape ? ' friday-poster-image--landscape' : ''}`}
           onLoad={() => setReadyPosters(previous => previous.map((ready, i) => i === index ? true : ready))}
           onError={() => {
             setReadyPosters(previous => previous.map((ready, i) => i === index ? false : ready));
